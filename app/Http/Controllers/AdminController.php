@@ -20,6 +20,24 @@ class AdminController extends Controller
         $totalAgents = Agent::count();
         $totalRevenue = User::sum('total_amount_paid');
         $totalSubscriptions = SubscriptionPlan::count();
-        return view('admin.dashboard', compact('totalAgents', 'totalRevenue', 'totalSubscriptions'));
+        
+        // Get recent withdrawal requests (last 5)
+        $recentWithdrawals = WithdrawalRequest::with('user')
+            ->latest()
+            ->take(5)
+            ->get();
+            
+        // Get recent users (last 5)
+        $recentUsers = User::latest()
+            ->take(5)
+            ->get();
+        
+        return view('admin.dashboard', [
+            'totalAgents' => $totalAgents,
+            'totalRevenue' => $totalRevenue,
+            'totalSubscriptions' => $totalSubscriptions,
+            'recentWithdrawals' => $recentWithdrawals,
+            'recentUsers' => $recentUsers
+        ]);
     }
 }

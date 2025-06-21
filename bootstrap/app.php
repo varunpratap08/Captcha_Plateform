@@ -11,7 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'jwt.admin' => \App\Http\Middleware\JwtAdminMiddleware::class,
+            'auth.jwt' => \App\Http\Middleware\AuthenticateWithJwt::class,
+        ]);
+
+        // We'll apply the auth.jwt middleware to specific routes instead of globally
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
