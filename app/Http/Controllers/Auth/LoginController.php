@@ -5,58 +5,66 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
+    /**
+     * Show the application's login form.
+     *
+     * @return \Illuminate\View\View
+     */
     public function showLoginForm()
     {
         return view('auth.login');
     }
 
+    /**
+     * Handle a login request to the application.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
     public function login(Request $request)
     {
-        // If already logged in, redirect to dashboard
-        if (Auth::check()) {
-            return redirect()->intended('/admin/dashboard');
-        }
-
+        \Log::info('Login attempt', ['email' => $request->email]);
+        
         $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            
-            if ($user->hasRole('admin')) {
-                $token = JWTAuth::fromUser($user);
-                
-                // Store the token in the session for web requests
-                $request->session()->put('jwt_token', $token);
-                
-                // Set the token in a cookie for API requests
-                return redirect()->intended('/admin/dashboard')
-                    ->withCookie(cookie('jwt_token', $token, 60 * 24, null, null, false, true));
-            }
-            
-            // If user doesn't have admin role, log them out
-            Auth::logout();
-            return back()->withErrors([
-                'email' => 'You do not have admin access.',
-            ]);
-        }
+        \Log::debug('Login credentials validated', $credentials);
 
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            \Log::info('Login successful', ['user_id' => Auth::id()]);
+            
+            return redirect()->intended(route('admin.dashboard'));
+        }
+        
+        \Log::warning('Login failed', ['email' => $request->email]);
+
+        throw ValidationException::withMessages([
+            'email' => __('auth.failed'),
         ]);
     }
 
-    public function logout()
+    /**
+     * Log the user out of the application.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function logout(Request $request)
     {
         Auth::logout();
-        session()->forget('jwt_token');
-        return redirect('/login')
-            ->withCookie(cookie()->forget('jwt_token'));
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/');
     }
 }
