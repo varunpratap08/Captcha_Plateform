@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class AdminUserSeeder extends Seeder
 {
@@ -24,8 +25,8 @@ class AdminUserSeeder extends Seeder
             ]
         );
 
-        // Assign admin role
-        $admin->assignRole('admin');
+        // Assign admin role using assignRole instead of syncRoles
+        $admin->assignRole($adminRole);
         
         $this->command->info('Admin user created successfully!');
         $this->command->info('Email: admin@example.com');

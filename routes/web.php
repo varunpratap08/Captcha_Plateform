@@ -14,6 +14,34 @@ use App\Http\Controllers\AgentController;
 |--------------------------------------------------------------------------
 */
 
+// Test route to verify routing is working
+Route::get('/test-route', function () {
+    return response()->json(['message' => 'Test route is working!']);
+});
+
+// Test API route in web.php
+Route::prefix('api')->group(function () {
+    Route::get('/test-api', function () {
+        return response()->json([
+            'status' => 'success',
+            'message' => 'API route is working!',
+            'data' => [
+                'time' => now()->toDateTimeString(),
+                'env' => app()->environment(),
+            ]
+        ]);
+    });
+
+    // Temporary register route for testing
+    Route::post('/register', function (Request $request) {
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Register endpoint is working!',
+            'data' => $request->all()
+        ], 200);
+    });
+});
+
 // Public routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
