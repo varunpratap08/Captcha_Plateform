@@ -56,17 +56,58 @@ Route::get('/test-simple', function () {
 // API v1 Routes
 Route::prefix('v1')->group(function () {
     // Public routes
-    Route::post('/send-otp', [OtpController::class, 'sendOtp']);
-    Route::post('/verify-otp', [OtpController::class, 'verifyOtp']);
-    Route::post('/register', [RegisterController::class, 'register']);
+    Route::post('send-otp', [\App\Http\Controllers\Api\Auth\OtpController::class, 'sendOtp']);
+    Route::post('verify-otp', [\App\Http\Controllers\Api\Auth\OtpController::class, 'verifyOtp']);
+    Route::post('register', [RegisterController::class, 'register']);
     
-    // Protected routes (require authentication)
+    // Debug route
+    Route::get('debug', function () {
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Debug route is working',
+            'data' => [
+                'request' => [
+                    'headers' => request()->headers->all(),
+                    'method' => request()->method(),
+                    'path' => request()->path(),
+                    'url' => request()->url(),
+                    'full_url' => request()->fullUrl(),
+                    'ip' => request()->ip(),
+                    'secure' => request()->secure(),
+                    'ajax' => request()->ajax(),
+                    'wants_json' => request()->wantsJson(),
+                    'accepts_json' => request()->wantsJson(),
+                    'accepts_html' => request()->acceptsHtml(),
+                    'content_type' => request()->header('content-type'),
+                    'accept' => request()->header('accept'),
+                ],
+                'app' => [
+                    'env' => app()->environment(),
+                    'debug' => config('app.debug'),
+                ]
+            ]
+        ]);
+    });
+    
+    // Protected routes (require JWT authentication)
     Route::middleware('auth:api')->group(function () {
         // Profile routes
-        Route::get('/profile', [ProfileController::class, 'show']);
-        Route::post('/complete-profile', [ProfileController::class, 'completeProfile']);
+        Route::prefix('profile')->group(function () {
+            Route::get('/', [ProfileController::class, 'getProfile']);
+            Route::post('/complete', [ProfileController::class, 'completeProfile']);
+        });
         
-        // Add other protected routes here
+        // Logout
+        Route::post('logout', [AuthController::class, 'logout']);
+        
+        // Admin routes (require admin role)
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('user', [AuthController::class, 'getUser']);
+            Route::apiResource('withdrawal-requests', WithdrawalRequestController::class);
+            Route::apiResource('subscription-plans', SubscriptionPlanController::class)->only(['index', 'store']);
+            Route::apiResource('users', UserController::class)->only(['index']);
+            Route::apiResource('agents', AgentController::class)->only(['index', 'store']);
+        });
     });
 });
 Route::post('/test-register', function () {
@@ -123,63 +164,4 @@ Route::get('/debug-routes', function() {
     ]);
 });
 
-    // API v1 Routes
-    Route::prefix('v1')->group(function () {
-        // Public routes
-        Route::post('login', [AuthController::class, 'login']);
-        
-        // Registration and OTP flow
-        Route::post('send-otp', [\App\Http\Controllers\Api\Auth\OtpController::class, 'sendOtp']);
-        Route::post('verify-otp', [\App\Http\Controllers\Api\Auth\OtpController::class, 'verifyOtp']);
-        Route::post('register', [RegisterController::class, 'register']);
-        
-        // Debug route
-        Route::get('debug', function () {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Debug route is working',
-                'data' => [
-                    'request' => [
-                        'headers' => request()->headers->all(),
-                        'method' => request()->method(),
-                        'path' => request()->path(),
-                        'url' => request()->url(),
-                        'full_url' => request()->fullUrl(),
-                        'ip' => request()->ip(),
-                        'secure' => request()->secure(),
-                        'ajax' => request()->ajax(),
-                        'wants_json' => request()->wantsJson(),
-                        'accepts_json' => request()->wantsJson(),
-                        'accepts_html' => request()->acceptsHtml(),
-                        'content_type' => request()->header('content-type'),
-                        'accept' => request()->header('accept'),
-                    ],
-                    'app' => [
-                        'env' => app()->environment(),
-                        'debug' => config('app.debug'),
-                    ]
-                ]
-            ]);
-        });
-        
-        // Protected routes (require authentication)
-        Route::middleware('auth:sanctum')->group(function () {
-            // User profile
-            Route::prefix('profile')->group(function () {
-                Route::get('/', [ProfileController::class, 'getProfile']);
-                Route::post('/complete', [ProfileController::class, 'completeProfile']);
-            });
-            
-            // Logout
-            Route::post('logout', [AuthController::class, 'logout']);
-            
-            // Admin routes (require admin role)
-            Route::middleware(['role:admin'])->group(function () {
-                Route::get('user', [AuthController::class, 'getUser']);
-                Route::apiResource('withdrawal-requests', WithdrawalRequestController::class);
-                Route::apiResource('subscription-plans', SubscriptionPlanController::class)->only(['index', 'store']);
-                Route::apiResource('users', UserController::class)->only(['index']);
-                Route::apiResource('agents', AgentController::class)->only(['index', 'store']);
-            });
-        });
-    });
+    
