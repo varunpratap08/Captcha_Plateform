@@ -27,10 +27,13 @@ class RegisterUserRequest extends FormRequest
                 'required',
                 'string',
                 'regex:/^[0-9]{10}$/',
-                'unique:users,phone',
                 'max:15',
             ],
-
+            'otp' => [
+                'required',
+                'string',
+                'size:6',
+            ]
         ];
     }
     
@@ -46,8 +49,8 @@ class RegisterUserRequest extends FormRequest
             'phone.unique' => 'This phone number is already registered',
             'phone.regex' => 'Please enter a valid 10-digit phone number',
             'phone.max' => 'Phone number must not exceed 15 digits',
-            'country_code.required' => 'Country code is required',
-            'country_code.regex' => 'Please enter a valid country code (e.g., +91)',
+            'otp.required' => 'OTP is required',
+            'otp.size' => 'OTP must be 6 digits long',
             'name.required' => 'Full name is required',
             'name.regex' => 'Name can only contain letters and spaces',
             'email.required' => 'Email address is required',

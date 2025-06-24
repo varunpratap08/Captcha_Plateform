@@ -17,44 +17,47 @@ class ForceJsonResponse
      */
     public function handle(Request $request, Closure $next)
     {
-        // Force JSON accept header
+        // Force JSON accept header for API requests
         $request->headers->set('Accept', 'application/json');
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest');
         
         // Handle preflight OPTIONS request
         if ($request->isMethod('OPTIONS')) {
-            return response('', 200)
+            return response('', 204)
                 ->header('Access-Control-Allow-Origin', '*')
-                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-TOKEN')
+                ->header('Access-Control-Allow-Credentials', 'true');
         }
         
         // Get the response
         $response = $next($request);
         
-        // Only modify non-JSON responses
-        if (!$response instanceof \Illuminate\Http\JsonResponse) {
-            $response = response()->json([
-                'status' => 'error',
-                'message' => 'Invalid response format',
-                'debug' => [
-                    'expected' => 'application/json',
-                    'received' => $response->headers->get('Content-Type')
-                ]
-            ], 500);
-        }
-        
-        // Add CORS headers if not already present
-        $corsHeaders = [
-            'Access-Control-Allow-Origin' => '*',
-            'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With',
-            'Content-Type' => 'application/json',
-        ];
-        
-        foreach ($corsHeaders as $key => $value) {
-            if (!$response->headers->has($key)) {
-                $response->headers->set($key, $value);
+        // Ensure JSON response for API routes
+        if ($request->is('api/*')) {
+            // If the response is not already JSON
+            if (!$response instanceof \Illuminate\Http\JsonResponse) {
+                $content = $response->getContent();
+                $decoded = json_decode($content, true);
+                
+                $response = response()->json(
+                    is_array($decoded) ? $decoded : ['data' => $content],
+                    $response->getStatusCode(),
+                    [],
+                    JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
+                );
             }
+            
+            // Set JSON content type header
+            $response->headers->set('Content-Type', 'application/json');
+            
+            // Add CORS headers to all API responses
+            $response->headers->set('Access-Control-Allow-Origin', '*');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-TOKEN');
+            $response->headers->set('Access-Control-Allow-Credentials', 'true');
+            $response->headers->set('X-Content-Type-Options', 'nosniff');
+            $response->headers->set('X-XSS-Protection', '1; mode=block');
         }
         
         return $response;

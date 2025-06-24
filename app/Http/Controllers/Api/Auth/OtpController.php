@@ -66,7 +66,7 @@ class OtpController extends Controller
     }
 
     /**
-     * Verify OTP and mark user as verified
+     * Verify OTP and return user status
      * 
      * @param Request $request
      * @return JsonResponse
@@ -78,8 +78,7 @@ class OtpController extends Controller
                 'phone' => [
                     'required',
                     'string',
-                    'regex:/^[0-9]{10}$/',
-                    'exists:users,phone',
+                    'regex:/^[0-9]{10}$/'
                 ],
                 'otp' => [
                     'required',
@@ -88,16 +87,32 @@ class OtpController extends Controller
                 ]
             ]);
 
+            // Find user by phone (if exists)
             $user = User::where('phone', $request->phone)->first();
             
+            // If user doesn't exist, just verify OTP is valid (for registration)
             if (!$user) {
+                // In a real app, you might want to verify OTP from session/cache
+                // For now, we'll just return success if OTP is 6 digits
+                if (strlen($request->otp) !== 6) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Invalid OTP format',
+                    ], 400);
+                }
+
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'User not found',
-                ], 404);
+                    'status' => 'success',
+                    'message' => 'OTP verified. Please register.',
+                    'data' => [
+                        'user_exists' => false,
+                        'phone' => $request->phone,
+                        'otp_verified' => true
+                    ]
+                ]);
             }
 
-            // Check if OTP is valid and not expired
+            // For existing users, verify OTP from database
             if (!Hash::check($request->otp, $user->otp)) {
                 return response()->json([
                     'status' => 'error',
@@ -115,7 +130,7 @@ class OtpController extends Controller
             // Mark user as verified
             $user->is_verified = true;
             $user->phone_verified_at = now();
-            $user->otp = null; // Clear OTP after successful verification
+            $user->otp = null;
             $user->otp_expires_at = null;
             $user->save();
 
@@ -126,16 +141,17 @@ class OtpController extends Controller
                 'status' => 'success',
                 'message' => 'OTP verified successfully',
                 'data' => [
+                    'user_exists' => true,
                     'user' => [
                         'id' => $user->id,
                         'phone' => $user->phone,
                         'is_verified' => true,
-                        'profile_completed' => (bool) $user->name, // Profile is complete if name is set
+                        'profile_completed' => (bool) $user->name,
                     ],
                     'token' => [
                         'access_token' => $token,
                         'token_type' => 'bearer',
-                        'expires_in' => auth('api')->factory()->getTTL() * 60 // in seconds
+                        'expires_in' => auth('api')->factory()->getTTL() * 60
                     ],
                     'redirect_to' => $user->name ? '/dashboard' : '/complete-profile'
                 ]

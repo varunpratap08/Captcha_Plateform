@@ -23,22 +23,27 @@ class CompleteProfileRequest extends FormRequest
      */
     public function rules(): array
     {
+        $userId = auth()->id();
+        
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.auth()->id()],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$userId],
             'profile_photo' => [
                 'nullable',
                 File::image()
                     ->max(2048) // 2MB
                     ->dimensions(Rule::dimensions()->maxWidth(1000)->maxHeight(1000)),
             ],
-            'date_of_birth' => ['nullable', 'date', 'before:today'],
-            'gender' => ['nullable', 'string', 'in:male,female,other'],
-            'address' => ['nullable', 'string', 'max:500'],
-            'city' => ['nullable', 'string', 'max:100'],
-            'state' => ['nullable', 'string', 'max:100'],
-            'country' => ['nullable', 'string', 'max:100'],
-            'pincode' => ['nullable', 'string', 'max:20'],
+            'date_of_birth' => ['required', 'date', 'before:today'],
+            'upi_id' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/'],
+            'referral_code' => [
+                'required',
+                'string',
+                'max:20',
+                'exists:users,referral_code',
+                Rule::unique('user_referrals', 'referral_code')->where('used_by', '!=', $userId)
+            ],
+            
         ];
     }
     

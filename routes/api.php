@@ -1,9 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\Auth\OtpController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\ProfileController;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,38 +18,57 @@ use App\Http\Controllers\Api\ProfileController;
 |
 */
 
-// Simple test route to verify basic functionality
-Route::get('/test-simple', function () {
-    return response()->json([
+// Clean test endpoint for CORS and JSON response
+Route::get('/test-clean', function (Request $request): JsonResponse {
+    return new JsonResponse([
         'status' => 'success',
-        'message' => 'Simple test route is working',
+        'message' => 'Clean test endpoint',
         'timestamp' => now()->toDateTimeString(),
-        'env' => app()->environment(),
-        'debug' => config('app.debug')
+        'headers' => [
+            'accept' => $request->header('accept'),
+            'content_type' => $request->header('content-type'),
+        ]
     ]);
 });
 
-// Direct test endpoint
-Route::get('/direct-test', function () {
+// Test endpoint to verify API is working with JSON response
+Route::get('/test-json', function (Request $request) {
+    return response()->json([
+        'status' => 'success',
+        'message' => 'JSON test endpoint',
+        'timestamp' => now()->toDateTimeString(),
+        'is_api' => $request->is('api/*'),
+        'middleware' => $request->route() ? $request->route()->gatherMiddleware() : [],
+        'accept_header' => $request->header('Accept'),
+        'content_type' => $request->header('Content-Type'),
+    ]);
+});
+
+// Simple test endpoint
+Route::get('/test-simple', function () {
     return [
         'status' => 'success',
-        'message' => 'Direct test endpoint is working',
-        'timestamp' => now()->toDateTimeString()
+        'message' => 'Simple test endpoint',
+        'timestamp' => now()->toDateTimeString(),
     ];
 });
 
-// Simple test route to verify basic functionality
-Route::get('/test-simple', function () {
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Simple test route is working',
-        'timestamp' => now()->toDateTimeString(),
-        'env' => app()->environment(),
-        'debug' => config('app.debug')
-    ]);
+// API v1 Routes
+Route::prefix('v1')->group(function () {
+    // Public routes
+    Route::post('/send-otp', [OtpController::class, 'sendOtp']);
+    Route::post('/verify-otp', [OtpController::class, 'verifyOtp']);
+    Route::post('/register', [RegisterController::class, 'register']);
+    
+    // Protected routes (require authentication)
+    Route::middleware('auth:api')->group(function () {
+        // Profile routes
+        Route::get('/profile', [ProfileController::class, 'show']);
+        Route::post('/complete-profile', [ProfileController::class, 'completeProfile']);
+        
+        // Add other protected routes here
+    });
 });
-
-// Test registration endpoint
 Route::post('/test-register', function () {
     return response()->json([
         'status' => 'success',

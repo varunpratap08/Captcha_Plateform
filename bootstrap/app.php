@@ -22,14 +22,14 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     )
     ->withMiddleware(function (\Illuminate\Foundation\Configuration\Middleware $middleware) {
-        // Global middleware
-        $middleware->append([
-            \Illuminate\Http\Middleware\HandleCors::class,
+        // Global middleware - CORS should be first
+        $middleware->prepend([
+            \App\Http\Middleware\CorsMiddleware::class,
         ]);
         
         // API middleware group
         $middleware->group('api', [
-            \App\Http\Middleware\ForceJsonResponse::class,
+            \App\Http\Middleware\EnforceJsonResponse::class,
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
