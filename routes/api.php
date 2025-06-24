@@ -106,8 +106,11 @@ Route::get('/debug-routes', function() {
     Route::prefix('v1')->group(function () {
         // Public routes
         Route::post('login', [AuthController::class, 'login']);
+        
+        // Registration and OTP flow
+        Route::post('send-otp', [\App\Http\Controllers\Api\Auth\OtpController::class, 'sendOtp']);
+        Route::post('verify-otp', [\App\Http\Controllers\Api\Auth\OtpController::class, 'verifyOtp']);
         Route::post('register', [RegisterController::class, 'register']);
-        Route::post('verify-otp', [RegisterController::class, 'verifyOtp']);
         
         // Debug route
         Route::get('debug', function () {

@@ -19,6 +19,11 @@ class User extends Authenticatable implements JWTSubject
      *
      * @var array<int, string>
      */
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'name',
         'email',
@@ -27,6 +32,7 @@ class User extends Authenticatable implements JWTSubject
         'otp',
         'otp_expires_at',
         'phone_verified_at',
+        'is_verified',
         'profile_photo_path',
         'date_of_birth',
         'gender',
@@ -43,6 +49,18 @@ class User extends Authenticatable implements JWTSubject
     ];
     
     /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+        'otp',
+        'otp_expires_at',
+    ];
+    
+    /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
@@ -51,18 +69,9 @@ class User extends Authenticatable implements JWTSubject
         'email_verified_at' => 'datetime',
         'phone_verified_at' => 'datetime',
         'otp_expires_at' => 'datetime',
+        'is_verified' => 'boolean',
         'date_of_birth' => 'date',
-        'purchased_date' => 'date',
-    ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
+        'purchased_date' => 'datetime',
     ];
 
     /**

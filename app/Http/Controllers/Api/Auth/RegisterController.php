@@ -14,13 +14,7 @@ use Illuminate\Support\Facades\Log;
 class RegisterController extends Controller
 {
     /**
-     * Register a new user with phone number
-     *
-     * @param RegisterUserRequest $request
-     * @return JsonResponse
-     */
-    /**
-     * Register a new user with phone number
+     * Register a new user with phone number and OTP
      *
      * @param RegisterUserRequest $request
      * @return JsonResponse
@@ -28,41 +22,36 @@ class RegisterController extends Controller
     public function register(RegisterUserRequest $request): JsonResponse
     {
         try {
-            // Generate a random OTP (for demo purposes)
-            $otp = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            // Check if user with this phone already exists
+            $user = User::where('phone', $request->phone)->first();
+            
+            if (!$user) {
+                // Create new user with minimal details
+                $user = User::create([
+                    'phone' => $request->phone,
+                    'otp' => Hash::make($request->otp),
+                    'otp_expires_at' => now()->addMinutes(10), // OTP valid for 10 minutes
+                ]);
+            } else {
+                // Update OTP for existing user
+                $user->update([
+                    'otp' => Hash::make($request->otp),
+                    'otp_expires_at' => now()->addMinutes(10),
+                ]);
+            }
             
             // In production, you would send this OTP via SMS
-            
-            // Create user (not verified yet)
-            $user = User::create([
-                'phone' => $request->phone,
-                'country_code' => $request->country_code,
-                'otp' => Hash::make($otp),
-                'otp_expires_at' => now()->addMinutes(10), // OTP valid for 10 minutes
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'referral_code' => $this->generateUniqueReferralCode(),
-            ]);
-
-            // For demo, we'll return the OTP in the response
-            // In production, remove this and send OTP via SMS
+            // For demo, we'll return success response
             return response()->json([
                 'status' => 'success',
                 'message' => 'OTP sent successfully',
                 'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'phone' => $user->phone,
-                        'country_code' => $user->country_code,
-                        'is_verified' => false,
-                        'profile_completed' => false,
-                    ],
-                    'otp' => $otp, // Remove this in production
+                    'user_id' => $user->id,
+                    'phone' => $user->phone,
+                    'is_verified' => false,
+                    'profile_completed' => false,
                 ]
-            ], 201);
+            ], 200);
             
         } catch (\Exception $e) {
             Log::error('Registration error: ' . $e->getMessage());

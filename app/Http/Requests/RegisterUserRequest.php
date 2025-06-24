@@ -30,51 +30,11 @@ class RegisterUserRequest extends FormRequest
                 'unique:users,phone',
                 'max:15',
             ],
-            'country_code' => [
-                'required',
-                'string',
-                'regex:/^\+[0-9]{1,4}$/',
-                'max:5',
-            ],
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                'regex:/^[a-zA-Z\s]+$/',
-            ],
-            'email' => [
-                'required',
-                'string',
-                'email:rfc,dns',
-                'max:255',
-                'unique:users,email',
-            ],
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/',
-            ],
-            'referral_code' => [
-                'nullable',
-                'string',
-                'size:8',
-                'exists:users,referral_code',
-            ],
-            'terms_accepted' => [
-                'required',
-                'accepted',
-            ],
-            'device_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
+
         ];
     }
     
-    /**
+    /*
      * Get custom messages for validator errors.
      *
      * @return array<string, string>
