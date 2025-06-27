@@ -13,7 +13,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Total Agents</h5>
                     <p class="card-text display-4">{{ $totalAgents ?? 0 }}</p>
-                    <a href="{{ route('agents.index') }}" class="text-white">View details →</a>
+                    <a href="{{ route('admin.agents.index') }}" class="text-white">View details →</a>
                 </div>
             </div>
         </div>
@@ -30,7 +30,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Total Subscriptions</h5>
                     <p class="card-text display-4">{{ $totalSubscriptions ?? 0 }}</p>
-                    <a href="{{ route('subscription-plans.index') }}" class="text-white">View plans →</a>
+                    <a href="{{ route('admin.subscription-plans.index') }}" class="text-white">View plans →</a>
                 </div>
             </div>
         </div>
@@ -70,7 +70,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <a href="{{ route('withdrawal-requests.index') }}" class="btn btn-sm btn-outline-primary mt-2">View All</a>
+                        <a href="{{ route('admin.withdrawal-requests.index') }}" class="btn btn-sm btn-outline-primary mt-2">View All</a>
                     @else
                         <p class="text-muted">No recent withdrawal requests.</p>
                     @endif
@@ -106,7 +106,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <a href="{{ route('users.index') }}" class="btn btn-sm btn-outline-primary mt-2">View All Users</a>
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-outline-primary mt-2">View All Users</a>
                     @else
                         <p class="text-muted">No users found.</p>
                     @endif

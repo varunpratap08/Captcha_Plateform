@@ -10,7 +10,8 @@ class SubscriptionPlanController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('jwt.admin')->except('index');
+        $this->middleware('jwt.admin')->only(['store']);
+        $this->middleware('auth:api')->only(['purchase']);
     }
 
     public function index()

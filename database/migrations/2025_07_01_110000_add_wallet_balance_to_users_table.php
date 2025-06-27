@@ -6,23 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->boolean('profile_completed')->default(false)->after('is_verified');
+            $table->decimal('wallet_balance', 12, 2)->default(0)->after('level');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('profile_completed');
+            $table->dropColumn('wallet_balance');
         });
     }
-};
+}; 

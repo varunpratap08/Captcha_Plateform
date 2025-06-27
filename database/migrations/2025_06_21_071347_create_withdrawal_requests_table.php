@@ -10,9 +10,17 @@ class CreateWithdrawalRequestsTable extends Migration
     {
         Schema::create('withdrawal_requests', function (Blueprint $table) {
             $table->id();
-            $table->string('subscription_name');
-            $table->boolean('status')->default(false);
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->decimal('amount', 10, 2);
+            $table->decimal('fee', 10, 2)->default(0);
+            $table->decimal('final_withdrawal_amount', 10, 2);
+            $table->string('upi_id');
+            $table->string('service_type')->default('UPI');
+            $table->string('status')->default('pending'); // pending, approved, declined
+            $table->timestamp('request_date')->useCurrent();
+            $table->timestamp('approved_at')->nullable();
+            $table->unsignedBigInteger('admin_id')->nullable();
+            $table->string('remarks')->nullable();
             $table->timestamps();
         });
     }

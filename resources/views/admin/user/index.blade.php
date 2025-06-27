@@ -12,6 +12,7 @@
                 <th>Purchased Date</th>
                 <th>Total Paid</th>
                 <th>Level</th>
+                <th>Wallet Balance</th>
             </tr>
         </thead>
         <tbody>
@@ -21,7 +22,8 @@
                     <td>{{ $user->subscription_name ?? 'N/A' }}</td>
                     <td>{{ $user->purchased_date ?? 'N/A' }}</td>
                     <td>{{ $user->total_amount_paid ?? '0.00' }}</td>
-                    <td>{{ $user->level ?? 'N/A' }}</td>
+                    <td>{{ \App\Models\CaptchaSolve::where('user_id', $user->id)->count() }}</td>
+                    <td>{{ $user->wallet_balance ?? '0.00' }}</td>
                 </tr>
             @endforeach
         </tbody>

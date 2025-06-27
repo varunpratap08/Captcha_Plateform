@@ -4,41 +4,39 @@
 
 @section('content')
     <h1>Withdrawal Requests</h1>
-    <a href="{{ route('withdrawal-requests.create') }}" class="btn btn-primary">Create Request</a>
+    <a href="{{ route('admin.withdrawal-requests.create') }}" class="btn btn-primary">Create Request</a>
     <table class="table">
         <thead>
             <tr>
-                <th>Subscription</th>
+                <th>Amount</th>
+                <th>UPI ID</th>
+                <th>Service Type</th>
                 <th>Status</th>
                 <th>User</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($requests as $request)
+            @foreach ($withdrawalRequests as $request)
                 <tr>
-                    <td>{{ $request->subscription_name }}</td>
-                    <td>{{ $request->status ? 'Approved' : 'Pending' }}</td>
-                    <td>{{ $request->user->name }}</td>
+                    <td>{{ $request->amount }}</td>
+                    <td>{{ $request->upi_id }}</td>
+                    <td>{{ $request->service_type }}</td>
                     <td>
-                        <form action="{{ route('withdrawal-requests.update', $request) }}" method="POST">
-                            @csrf
-                            @method('PATCH')
-                            <div class="form-group">
-                                <label for="status">Status</label>
-                                <select name="status" id="status">
-                                    <option value="0" {{ !$request->status ? 'selected' : '' }}>Pending</option>
-                                    <option value="1" {{ $request->status ? 'selected' : '' }}>Approved</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Update</button>
-                        </form>
+                        <span class="badge bg-{{ $request->status === 'approved' ? 'success' : ($request->status === 'pending' ? 'warning' : 'danger') }}">
+                            {{ ucfirst($request->status) }}
+                        </span>
+                    </td>
+                    <td>{{ $request->user->name ?? 'N/A' }}</td>
+                    <td>
+                        <!-- Actions: Approve/Decline buttons can be added here if needed -->
+                        <span class="text-muted">Handled via API</span>
                     </td>
                 </tr>
             @endforeach
         </tbody>
     </table>
     <div class="pagination">
-        {{ $requests->links() }}
+        {{ $withdrawalRequests->links() }}
     </div>
 @endsection

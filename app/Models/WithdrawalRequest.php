@@ -12,9 +12,17 @@ class WithdrawalRequest extends Model
      * @var array
      */
     protected $fillable = [
-        'subscription_name',
-        'status',
         'user_id',
+        'amount',
+        'fee',
+        'final_withdrawal_amount',
+        'upi_id',
+        'service_type',
+        'status',
+        'request_date',
+        'approved_at',
+        'admin_id',
+        'remarks',
     ];
 
     /**
@@ -23,5 +31,13 @@ class WithdrawalRequest extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the admin who approved the withdrawal request.
+     */
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
     }
 }

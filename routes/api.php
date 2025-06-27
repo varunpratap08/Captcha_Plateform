@@ -309,14 +309,21 @@ Route::prefix('v1')->group(function () {
         // New route for purchasing a plan (must be before admin group)
         Route::post('plans/purchase', [\App\Http\Controllers\Api\SubscriptionPlanController::class, 'purchase']);
         
-        // Admin routes (require admin role)
-        Route::middleware(['role:admin'])->group(function () {
-            Route::get('user', [AuthController::class, 'getUser']);
-            Route::apiResource('withdrawal-requests', WithdrawalRequestController::class);
-            Route::apiResource('subscription-plans', SubscriptionPlanController::class)->only(['index', 'store']);
-            Route::apiResource('users', UserController::class)->only(['index']);
-            Route::apiResource('agents', AgentController::class)->only(['index', 'store']);
-        });
+        // Withdrawal requests (user create, admin list/approve/decline)
+        Route::post('withdrawal-requests', [\App\Http\Controllers\Api\WithdrawalRequestController::class, 'store']); // user create
+        Route::get('withdrawal-requests', [\App\Http\Controllers\Api\WithdrawalRequestController::class, 'index']); // admin list
+        Route::post('withdrawal-requests/{id}/approve', [\App\Http\Controllers\Api\WithdrawalRequestController::class, 'approve']); // admin approve
+        Route::post('withdrawal-requests/{id}/decline', [\App\Http\Controllers\Api\WithdrawalRequestController::class, 'decline']); // admin decline
+
+        // Captcha solve routes
+        Route::post('captcha/solve', [\App\Http\Controllers\Api\CaptchaSolveController::class, 'solveCaptcha']);
+        Route::get('captcha/level', [\App\Http\Controllers\Api\CaptchaSolveController::class, 'getLevel']);
+        Route::get('captcha/level/{user_id}', [\App\Http\Controllers\Api\CaptchaSolveController::class, 'getLevelByUserId']);
+        Route::post('captcha/level-by-user', [\App\Http\Controllers\Api\CaptchaSolveController::class, 'getLevelByUserIdFromBody']);
+
+        // New route for getting wallet
+        Route::get('wallet', [\App\Http\Controllers\Api\WalletController::class, 'show']);
+        Route::post('wallet/by-user', [\App\Http\Controllers\Api\WalletController::class, 'showByUserId']);
     });
     
     // New route for getting plans
