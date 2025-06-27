@@ -22,63 +22,109 @@ class ProfileController extends Controller
      */
     public function completeProfile(CompleteProfileRequest $request): JsonResponse
     {
-        return DB::transaction(function () use ($request) {
-            $user = Auth::user();
-            $data = $request->validated();
-            
-            // Handle profile photo upload if present
-            if ($request->hasFile('profile_photo')) {
-                // Delete old profile photo if exists
-                if ($user->profile_photo_path) {
-                    Storage::disk('public')->delete($user->profile_photo_path);
-                }
-                $path = $request->file('profile_photo')->store('profile-photos', 'public');
-                $data['profile_photo_path'] = $path;
-            }
-            
-            // Handle referral code if provided
-            if (isset($data['referral_code'])) {
-                $referrer = User::where('referral_code', $data['referral_code'])->first();
+        try {
+            return DB::transaction(function () use ($request) {
+                $user = Auth::user();
                 
-                if ($referrer) {
-                    // Record the referral
-                    UserReferral::create([
-                        'referrer_id' => $referrer->id,
-                        'referred_id' => $user->id,
-                        'referral_code' => $data['referral_code'],
-                        'used_at' => now(),
-                    ]);
-                    
-                    // You can add referral bonus logic here if needed
+                if (!$user) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'User not authenticated.'
+                    ], 401);
                 }
                 
-                // Remove referral_code from data as it's not a direct user field
-                unset($data['referral_code']);
-            }
-            
-            // Generate a referral code for the user if they don't have one
-            if (empty($user->referral_code)) {
-                $data['referral_code'] = $this->generateUniqueReferralCode();
-            }
-            
-            // Update user profile
-            $user->update($data);
-            
-            // Generate new token with updated user data
-            $token = auth('api')->login($user);
+                $data = $request->validated();
+                
+                // Handle profile photo upload if present
+                if ($request->hasFile('profile_photo')) {
+                    try {
+                        // Delete old profile photo if exists
+                        if ($user->profile_photo_path) {
+                            Storage::disk('public')->delete($user->profile_photo_path);
+                        }
+                        $path = $request->file('profile_photo')->store('profile-photos', 'public');
+                        $data['profile_photo_path'] = $path;
+                    } catch (\Exception $e) {
+                        \Log::error('Profile photo upload failed', [
+                            'user_id' => $user->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        throw new \RuntimeException('Failed to upload profile photo. Please try again.');
+                    }
+                }
+                
+                // Handle referral code if provided
+                if (isset($data['referral_code'])) {
+                    try {
+                        $referrer = User::where('referral_code', $data['referral_code'])->first();
+                        
+                        // Prevent self-referral and ensure referrer exists and is not the same as the user
+                        if ($referrer && $referrer->id !== $user->id) {
+                            // Check if this user has already used a referral code
+                            $existingReferral = UserReferral::where('referred_id', $user->id)->exists();
+                            
+                            if (!$existingReferral) {
+                                // Record the referral
+                                UserReferral::create([
+                                    'referrer_id' => $referrer->id,
+                                    'referred_id' => $user->id,
+                                    'referral_code' => $data['referral_code'],
+                                    'used_at' => now(),
+                                ]);
+                                
+                                // You can add referral bonus logic here if needed
+                            }
+                        }
+                        
+                        // Remove referral_code from data as it's not a direct user field
+                        unset($data['referral_code']);
+                    } catch (\Exception $e) {
+                        \Log::error('Referral processing failed', [
+                            'user_id' => $user->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Continue without failing the entire request if referral processing fails
+                    }
+                }
+                
+                // Mark profile as completed
+                $data['profile_completed'] = true;
+                
+                // Update user profile
+                if (!$user->update($data)) {
+                    throw new \RuntimeException('Failed to update user profile.');
+                }
+                
+                // Generate new token with updated user data
+                if (!$token = auth('api')->login($user)) {
+                    throw new \RuntimeException('Failed to generate authentication token.');
+                }
+                
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Profile completed successfully',
+                    'user' => $user->makeHidden(['otp', 'otp_expires_at']),
+                    'profile_completed' => true,
+                    'token' => [
+                        'access_token' => $token,
+                        'token_type' => 'bearer',
+                        'expires_in' => auth('api')->factory()->getTTL() * 60 // in seconds
+                    ],
+                    'redirect_to' => '/dashboard'
+                ]);
+            });
+        } catch (\Exception $e) {
+            \Log::error('Profile completion failed', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
             return response()->json([
-                'status' => 'success',
-                'message' => 'Profile completed successfully',
-                'user' => $user->makeHidden(['otp', 'otp_expires_at']),
-                'token' => [
-                    'access_token' => $token,
-                    'token_type' => 'bearer',
-                    'expires_in' => auth('api')->factory()->getTTL() * 60 // in seconds
-                ],
-                'redirect_to' => '/dashboard'
-            ]);
-        });
+                'status' => 'error',
+                'message' => 'Failed to complete profile. ' . $e->getMessage()
+            ], 500);
+        }
     }
     
     /**

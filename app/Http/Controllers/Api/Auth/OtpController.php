@@ -19,48 +19,149 @@ class OtpController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
+    /**
+     * Send OTP to the provided phone number
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function sendOtp(Request $request): JsonResponse
     {
+        // Start timing the request
+        $startTime = microtime(true);
+        $logContext = [
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'request_id' => Str::uuid()->toString()
+        ];
+
         try {
-            $request->validate([
+            Log::info('OTP Request Received', array_merge($logContext, [
+                'data' => $request->all()
+            ]));
+
+            // Validate the request
+            $validated = $request->validate([
                 'phone' => [
                     'required',
                     'string',
-                    'regex:/^[0-9]{10}$/',
-                    'max:15',
+                    'regex:/^[0-9]{10}$/'
                 ]
             ]);
+            
+            $phone = $validated['phone'];
+            Log::info('Phone number validated', array_merge($logContext, [
+                'phone' => $phone
+            ]));
 
             // Generate a random 6-digit OTP
             $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $otpExpiresAt = now()->addMinutes(10);
             
-            // In production, you would send this OTP via SMS
-            // For demo, we'll just log it
-            Log::info("OTP for {$request->phone}: $otp");
+            Log::debug('OTP generated', array_merge($logContext, [
+                'otp' => $otp,
+                'expires_at' => $otpExpiresAt->toDateTimeString()
+            ]));
             
-            // Find or create user
-            $user = User::firstOrNew(['phone' => $request->phone]);
+            // Find the user by phone or create a new one
+            $user = User::firstOrNew(['phone' => $phone]);
+            
+            // If it's a new user, set some default values
+            if (!$user->exists) {
+                $user->name = 'User-' . substr($phone, -4); // Default name based on last 4 digits of phone
+                $user->password = bcrypt(Str::random(12)); // Temporary password
+                $user->is_verified = false;
+                Log::info('New user created for OTP', array_merge($logContext, [
+                    'phone' => $phone,
+                    'is_new_user' => true
+                ]));
+            }
+            
+            // Update user with new OTP
             $user->otp = Hash::make($otp);
-            $user->otp_expires_at = now()->addMinutes(10); // OTP valid for 10 minutes
-            $user->save();
+            $user->otp_expires_at = $otpExpiresAt;
             
-            return response()->json([
+            if (!$user->save()) {
+                $error = 'Failed to update OTP in database';
+                Log::error($error, array_merge($logContext, [
+                    'user_id' => $user->id,
+                    'elapsed_ms' => round((microtime(true) - $startTime) * 1000, 2)
+                ]));
+                
+                throw new \RuntimeException($error);
+            }
+            
+            Log::info('OTP saved successfully', array_merge($logContext, [
+                'user_id' => $user->id,
+                'otp_expires_at' => $otpExpiresAt->toDateTimeString()
+            ]));
+            
+            // In production, you would send this OTP via SMS here
+            // For demo, we'll just log it
+            Log::info("OTP for {$phone}: {$otp}", $logContext);
+            
+            $response = [
                 'status' => 'success',
                 'message' => 'OTP sent successfully',
                 'data' => [
-                    'phone' => $user->phone,
+                    'phone' => $phone,
                     'otp_expires_in' => 10, // minutes
-                    // In production, don't return the OTP in the response
-                    'otp' => $otp // Remove this in production
+                    'otp_expires_at' => $otpExpiresAt->toIso8601String(),
+                    // Include OTP in development for testing
+                    'otp' => config('app.env') === 'local' ? $otp : null,
+                    'request_id' => $logContext['request_id']
                 ]
-            ]);
+            ];
             
-        } catch (\Exception $e) {
-            Log::error('OTP send error: ' . $e->getMessage());
+            Log::info('OTP response prepared', array_merge($logContext, [
+                'elapsed_ms' => round((microtime(true) - $startTime) * 1000, 2)
+            ]));
+            
+            return response()->json($response);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = $e->errors();
+            Log::warning('Validation failed', array_merge($logContext, [
+                'errors' => $errors,
+                'input' => $request->all(),
+                'elapsed_ms' => round((microtime(true) - $startTime) * 1000, 2)
+            ]));
+            
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to send OTP',
-                'error' => config('app.debug') ? $e->getMessage() : null
+                'message' => 'Validation failed',
+                'errors' => $errors,
+                'request_id' => $logContext['request_id'],
+                'debug' => config('app.debug') ? [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ] : null
+            ], 422);
+            
+        } catch (\Exception $e) {
+            $errorId = Str::uuid();
+            Log::error('OTP send error', array_merge($logContext, [
+                'error_id' => $errorId,
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
+                'elapsed_ms' => round((microtime(true) - $startTime) * 1000, 2)
+            ]));
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to send OTP. Please try again.',
+                'error_id' => $errorId,
+                'request_id' => $logContext['request_id'],
+                'debug' => config('app.debug') ? [
+                    'message' => $e->getMessage(),
+                    'exception' => get_class($e),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ] : null
             ], 500);
         }
     }

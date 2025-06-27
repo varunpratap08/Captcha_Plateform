@@ -37,13 +37,12 @@ class CompleteProfileRequest extends FormRequest
             'date_of_birth' => ['required', 'date', 'before:today'],
             'upi_id' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/'],
             'referral_code' => [
-                'required',
+                'nullable',
                 'string',
                 'max:20',
                 'exists:users,referral_code',
-                Rule::unique('user_referrals', 'referral_code')->where('used_by', '!=', $userId)
+                Rule::unique('user_referrals', 'referral_code')->where('referred_id', $userId)
             ],
-            
         ];
     }
     

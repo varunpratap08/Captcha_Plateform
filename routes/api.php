@@ -6,6 +6,140 @@ use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+
+/*
+|--------------------------------------------------------------------------
+| Test Routes - For API response testing
+|--------------------------------------------------------------------------
+*/
+
+// Test JSON response
+Route::get('/test-json', function () {
+    return [
+        'message' => 'This is a test JSON response',
+        'timestamp' => now()->toDateTimeString(),
+        'success' => true
+    ];
+});
+
+// Test HTML response (should be converted to JSON)
+Route::get('/test-html', function () {
+    return "<h1>This is an HTML response</h1>";
+});
+
+// Test error response
+Route::get('/test-error', function () {
+    return response()->json([
+        'error' => 'Test error message',
+        'code' => 400
+    ], 400);
+});
+
+// Test user data response
+Route::get('/test-user', function (Request $request) {
+    return [
+        'user' => [
+            'id' => 1,
+            'name' => 'Test User',
+            'email' => 'test@example.com'
+        ],
+        'auth' => [
+            'authenticated' => $request->user() ? true : false,
+            'token' => $request->bearerToken() ? '***' . substr($request->bearerToken(), -8) : null
+        ]
+    ];
+});
+
+/*
+|--------------------------------------------------------------------------
+| Test Login Route - For debugging only
+|--------------------------------------------------------------------------
+*/
+Route::get('/test-login', function () {
+    $phone = '9457508075'; // Test with the user's phone number
+    $otp = '123456'; // Test OTP - should match what's in the database
+    
+    try {
+        Log::info('Test login endpoint called', ['phone' => $phone]);
+        
+        // 1. Check if user exists
+        $user = User::where('phone', $phone)->first();
+        
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found',
+                'user_exists' => false
+            ]);
+        }
+        
+        // 2. Check if OTP is set
+        if (empty($user->otp)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No OTP set for user',
+                'user_exists' => true,
+                'has_otp' => false,
+                'user' => [
+                    'id' => $user->id,
+                    'phone' => $user->phone,
+                    'otp' => $user->otp,
+                    'otp_expires_at' => $user->otp_expires_at,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at
+                ]
+            ]);
+        }
+        
+        // 3. Verify OTP hash
+        $otpMatches = Hash::check($otp, $user->otp);
+        
+        // 4. Check OTP expiration
+        $isExpired = $user->otp_expires_at && now()->gt($user->otp_expires_at);
+        
+        return response()->json([
+            'status' => 'success',
+            'user' => [
+                'id' => $user->id,
+                'phone' => $user->phone,
+                'has_otp' => !empty($user->otp),
+                'otp_expires_at' => $user->otp_expires_at,
+                'is_expired' => $isExpired,
+                'otp_matches' => $otpMatches
+            ],
+            'debug' => [
+                'otp_stored' => $user->otp,
+                'otp_provided' => $otp,
+                'otp_matches' => $otpMatches,
+                'current_time' => now(),
+                'is_expired' => $isExpired
+            ]
+        ]);
+        
+    } catch (\Exception $e) {
+        Log::error('Test login error', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Test failed',
+            'error' => [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'code' => $e->getCode()
+            ]
+        ], 500);
+    }
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -53,9 +187,79 @@ Route::get('/test-simple', function () {
     ];
 });
 
+// Test database connection
+Route::get('/test-db', function() {
+    try {
+        // Test database connection
+        DB::connection()->getPdo();
+        
+        // Test users table
+        $user = \App\Models\User::first();
+        
+        return response()->json([
+            'status' => 'success',
+            'database' => 'Connected successfully',
+            'users_table' => $user ? 'Has users' : 'No users found',
+            'time' => now()->toDateTimeString()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ], 500);
+    }
+});
+
+// Test OTP sending
+Route::post('/test-send-otp', function(\Illuminate\Http\Request $request) {
+    try {
+        $request->validate([
+            'phone' => 'required|string|regex:/^[0-9]{10}$/'
+        ]);
+        
+        $phone = $request->phone;
+        $user = \App\Models\User::where('phone', $phone)->first();
+        
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found with this phone number'
+            ], 404);
+        }
+        
+        // Generate OTP
+        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $user->otp = \Illuminate\Support\Facades\Hash::make($otp);
+        $user->otp_expires_at = now()->addMinutes(10);
+        $user->save();
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'OTP sent successfully',
+            'data' => [
+                'phone' => $user->phone,
+                'otp' => $otp, // Only for testing
+                'otp_expires_at' => $user->otp_expires_at
+            ]
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => config('app.debug') ? $e->getTraceAsString() : null
+        ], 500);
+    }
+});
+
 // API v1 Routes
 Route::prefix('v1')->group(function () {
-    // Public routes
+    // Public routes - Authentication
+    Route::post('login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
     Route::post('send-otp', [\App\Http\Controllers\Api\Auth\OtpController::class, 'sendOtp']);
     Route::post('verify-otp', [\App\Http\Controllers\Api\Auth\OtpController::class, 'verifyOtp']);
     Route::post('register', [RegisterController::class, 'register']);

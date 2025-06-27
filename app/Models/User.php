@@ -46,6 +46,7 @@ class User extends Authenticatable implements JWTSubject
         'purchased_date',
         'total_amount_paid',
         'level',
+        'profile_completed',
     ];
     
     /**
@@ -67,9 +68,11 @@ class User extends Authenticatable implements JWTSubject
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'phone_verified_at' => 'datetime',
+        'password' => 'hashed',
         'otp_expires_at' => 'datetime',
+        'phone_verified_at' => 'datetime',
         'is_verified' => 'boolean',
+        'profile_completed' => 'boolean',
         'date_of_birth' => 'date',
         'purchased_date' => 'datetime',
     ];
