@@ -154,4 +154,63 @@ class ProfileController extends Controller
             'requires_profile_completion' => !$user->isProfileComplete()
         ]);
     }
+
+    /**
+     * Update user profile (edit profile)
+     * 
+     * @param CompleteProfileRequest $request
+     * @return JsonResponse
+     */
+    public function updateProfile(CompleteProfileRequest $request): JsonResponse
+    {
+        try {
+            return DB::transaction(function () use ($request) {
+                $user = Auth::user();
+                if (!$user) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'User not authenticated.'
+                    ], 401);
+                }
+                $data = $request->validated();
+                // Handle profile photo upload if present
+                if ($request->hasFile('profile_photo')) {
+                    try {
+                        if ($user->profile_photo_path) {
+                            Storage::disk('public')->delete($user->profile_photo_path);
+                        }
+                        $path = $request->file('profile_photo')->store('profile-photos', 'public');
+                        $data['profile_photo_path'] = $path;
+                    } catch (\Exception $e) {
+                        \Log::error('Profile photo upload failed', [
+                            'user_id' => $user->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        throw new \RuntimeException('Failed to upload profile photo. Please try again.');
+                    }
+                }
+                // Remove referral_code if present (not editable after complete)
+                unset($data['referral_code']);
+                // Do not change profile_completed flag here
+                if (!$user->update($data)) {
+                    throw new \RuntimeException('Failed to update user profile.');
+                }
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Profile updated successfully',
+                    'user' => $user->makeHidden(['otp', 'otp_expires_at'])
+                ]);
+            });
+        } catch (\Exception $e) {
+            \Log::error('Profile update failed', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to update profile. ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

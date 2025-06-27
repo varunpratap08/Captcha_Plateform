@@ -93,6 +93,22 @@ class AuthController extends Controller
                 ], 403);
             }
 
+            // Check if user has the requested role
+            $role = $request->role ?? 'user';
+            if (!$user->hasRole($role)) {
+                Log::warning('Login attempt with incorrect role', [
+                    'user_id' => $user->id,
+                    'phone' => $request->phone,
+                    'requested_role' => $role,
+                    'user_roles' => $user->getRoleNames(),
+                    'ip' => request()->ip()
+                ]);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'You do not have the required role to login as ' . $role . '.',
+                ], 403);
+            }
+
             // Clear the OTP after successful verification
             $user->otp = null;
             $user->otp_expires_at = null;
@@ -111,7 +127,7 @@ class AuthController extends Controller
                     'access_token' => $token,
                     'token_type' => 'bearer',
                     'expires_in' => auth('api')->factory()->getTTL() * 60,
-                    'user' => $user->load('profile'),
+                    'user' => $user,
                     'profile_completed' => (bool) $user->name,
                     'redirect_to' => $user->name ? '/dashboard' : '/complete-profile'
                 ]
@@ -174,18 +190,37 @@ class AuthController extends Controller
     public function logout(): JsonResponse
     {
         try {
-            auth()->logout();
-            
+            $token = request()->bearerToken();
+            if (!$token) {
+                \Log::warning('Logout attempt without token', [
+                    'ip' => request()->ip(),
+                    'user_agent' => request()->userAgent()
+                ]);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No token provided.'
+                ], 401);
+            }
+
+            auth('api')->logout();
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Successfully logged out'
             ]);
-            
-        } catch (\Exception $e) {
-            Log::error('Logout error: ' . $e->getMessage());
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+            \Log::error('JWT logout error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to logout. Please try again.'
+                'message' => 'Failed to logout. Token may be invalid or already logged out.',
+                'debug' => config('app.debug') ? $e->getMessage() : null
+            ], 401);
+        } catch (\Exception $e) {
+            \Log::error('Logout error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to logout. Please try again.',
+                'debug' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
@@ -209,7 +244,7 @@ class AuthController extends Controller
             
             return response()->json([
                 'status' => 'success',
-                'user' => $user->load('profile')
+                'user' => $user
             ]);
             
         } catch (JWTException $e) {

@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 
 class AdminUserSeeder extends Seeder
 {
@@ -14,7 +13,8 @@ class AdminUserSeeder extends Seeder
     {
         // Create admin role if it doesn't exist
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        
+        $userRole = Role::firstOrCreate(['name' => 'user']);
+
         // Create admin user
         $admin = User::firstOrCreate(
             ['email' => 'admin@example.com'],
@@ -24,12 +24,21 @@ class AdminUserSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-
-        // Assign admin role using assignRole instead of syncRoles
         $admin->assignRole($adminRole);
-        
-        $this->command->info('Admin user created successfully!');
-        $this->command->info('Email: admin@example.com');
-        $this->command->info('Password: password');
+
+        // Create a default user
+        $user = User::firstOrCreate(
+            ['email' => 'user@example.com'],
+            [
+                'name' => 'Default User',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+        $user->assignRole($userRole);
+
+        $this->command->info('Admin and default user created successfully!');
+        $this->command->info('Admin Email: admin@example.com | Password: password');
+        $this->command->info('User Email: user@example.com | Password: password');
     }
 }

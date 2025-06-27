@@ -6,13 +6,17 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Function to make API request
-function makeApiRequest($url, $method = 'GET', $data = []) {
+function makeApiRequest($url, $method = 'GET', $data = [], $token = null) {
     $ch = curl_init();
     
     $headers = [
         'Accept: application/json',
         'Content-Type: application/json',
     ];
+    
+    if ($token) {
+        $headers[] = 'Authorization: Bearer ' . $token;
+    }
     
     $options = [
         CURLOPT_URL => $url,

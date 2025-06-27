@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Api\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -299,10 +300,14 @@ Route::prefix('v1')->group(function () {
         Route::prefix('profile')->group(function () {
             Route::get('/', [ProfileController::class, 'getProfile']);
             Route::post('/complete', [ProfileController::class, 'completeProfile']);
+            Route::patch('/', [ProfileController::class, 'updateProfile']);
         });
         
         // Logout
         Route::post('logout', [AuthController::class, 'logout']);
+
+        // New route for purchasing a plan (must be before admin group)
+        Route::post('plans/purchase', [\App\Http\Controllers\Api\SubscriptionPlanController::class, 'purchase']);
         
         // Admin routes (require admin role)
         Route::middleware(['role:admin'])->group(function () {
@@ -313,6 +318,9 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('agents', AgentController::class)->only(['index', 'store']);
         });
     });
+    
+    // New route for getting plans
+    Route::get('plans', [\App\Http\Controllers\Api\SubscriptionPlanController::class, 'index']);
 });
 Route::post('/test-register', function () {
     return response()->json([

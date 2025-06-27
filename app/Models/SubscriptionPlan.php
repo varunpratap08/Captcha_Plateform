@@ -13,8 +13,20 @@ class SubscriptionPlan extends Model
      */
     protected $fillable = [
         'name',
+        'captcha_per_day',
+        'min_withdrawal_limit',
+        'cost',
+        'earning_type',
+        'plan_type',
         'icon',
+        'image',
         'caption_limit',
+        'earnings',
+        'min_daily_earning',
+    ];
+
+    protected $casts = [
+        'earnings' => 'array',
     ];
 
     /**

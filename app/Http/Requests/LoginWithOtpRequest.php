@@ -39,6 +39,11 @@ class LoginWithOtpRequest extends FormRequest
                 'string',
                 'size:6',
             ],
+            'role' => [
+                'required',
+                'string',
+                'in:user,agent',
+            ],
         ];
     }
 

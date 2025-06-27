@@ -28,11 +28,22 @@ class RegisterUserRequest extends FormRequest
                 'string',
                 'regex:/^[0-9]{10}$/',
                 'max:15',
+                function ($attribute, $value, $fail) {
+                    $user = \App\Models\User::where('phone', $value)->first();
+                    if ($user && $user->is_verified) {
+                        $fail('This phone number is already registered. Please login instead.');
+                    }
+                },
             ],
             'otp' => [
                 'required',
                 'string',
                 'size:6',
+            ],
+            'role' => [
+                'required',
+                'string',
+                'in:user,agent',
             ]
         ];
     }

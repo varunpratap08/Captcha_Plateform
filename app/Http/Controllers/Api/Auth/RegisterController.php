@@ -48,12 +48,11 @@ class RegisterController extends Controller
                 \Log::debug('User lookup result', ['exists' => $user ? true : false, 'is_verified' => $user ? $user->is_verified : null]);
                 
                 if ($user && $user->is_verified) {
-                    // User exists and is already verified - log them in
-                    if (!$token = auth('api')->login($user)) {
-                        throw new \RuntimeException('Failed to generate authentication token');
-                    }
-                    
-                    return $this->respondWithToken($token, $user, 'Login successful');
+                    // Block registration for already verified users
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'This phone number is already registered. Please login instead.'
+                    ], 409);
                 }
                 
                 // Verify OTP for new or unverified user
@@ -120,7 +119,13 @@ class RegisterController extends Controller
                     throw new \RuntimeException('Failed to generate authentication token');
                 }
                 
-                $response = $this->respondWithToken($token, $user, 'Registration successful');
+                // Assign role to user
+                $role = $validated['role'] ?? 'user';
+                if (!$user->hasRole($role)) {
+                    $user->assignRole($role);
+                }
+                
+                $response = $this->respondWithToken($token, $user, 'Register successfully');
                 
                 // Add profile completion status to response
                 $responseData = $response->getData(true);
