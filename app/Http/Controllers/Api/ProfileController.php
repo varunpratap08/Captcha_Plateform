@@ -56,30 +56,52 @@ class ProfileController extends Controller
                 // Handle referral code if provided
                 if (isset($data['referral_code'])) {
                     try {
-                        $referrer = User::where('referral_code', $data['referral_code'])->first();
+                        $agent = \App\Models\Agent::where('referral_code', $data['referral_code'])->first();
                         
-                        // Prevent self-referral and ensure referrer exists and is not the same as the user
-                        if ($referrer && $referrer->id !== $user->id) {
-                            // Check if this user has already used a referral code
-                            $existingReferral = UserReferral::where('referred_id', $user->id)->exists();
-                            
-                            if (!$existingReferral) {
-                                // Record the referral
-                                UserReferral::create([
-                                    'referrer_id' => $referrer->id,
-                                    'referred_id' => $user->id,
-                                    'referral_code' => $data['referral_code'],
-                                    'used_at' => now(),
-                                ]);
+                        // Ensure agent exists and is active
+                        if ($agent && $agent->status === 'active') {
+                            // Check if this user has already used an agent referral code
+                            if (!$user->agent_id) {
+                                // Update user with agent referral
+                                $user->agent_id = $agent->id;
+                                $user->agent_referral_code = $data['referral_code'];
                                 
-                                // You can add referral bonus logic here if needed
+                                // Credit agent wallet with referral reward from their current plan
+                                $plan = $agent->currentPlan();
+                                if ($plan && $plan->referral_reward > 0) {
+                                    $agent->wallet_balance += $plan->referral_reward;
+                                    $agent->save();
+                                    // Log the transaction
+                                    \App\Models\AgentWalletTransaction::create([
+                                        'agent_id' => $agent->id,
+                                        'amount' => $plan->referral_reward,
+                                        'type' => 'credit',
+                                        'description' => 'Referral reward for user #' . $user->id,
+                                    ]);
+                                    \Log::info('Agent wallet credited for referral', [
+                                        'agent_id' => $agent->id,
+                                        'user_id' => $user->id,
+                                        'reward' => $plan->referral_reward
+                                    ]);
+                                }
+                                
+                                \Log::info('Agent referral recorded', [
+                                    'user_id' => $user->id,
+                                    'agent_id' => $agent->id,
+                                    'referral_code' => $data['referral_code']
+                                ]);
                             }
+                        } else {
+                            \Log::warning('Invalid or inactive agent referral code used', [
+                                'user_id' => $user->id,
+                                'referral_code' => $data['referral_code']
+                            ]);
                         }
                         
                         // Remove referral_code from data as it's not a direct user field
                         unset($data['referral_code']);
                     } catch (\Exception $e) {
-                        \Log::error('Referral processing failed', [
+                        \Log::error('Agent referral processing failed', [
                             'user_id' => $user->id,
                             'error' => $e->getMessage()
                         ]);
@@ -105,6 +127,7 @@ class ProfileController extends Controller
                     'message' => 'Profile completed successfully',
                     'user' => $user->makeHidden(['otp', 'otp_expires_at']),
                     'profile_completed' => true,
+                    'profile_photo_url' => $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : null,
                     'token' => [
                         'access_token' => $token,
                         'token_type' => 'bearer',

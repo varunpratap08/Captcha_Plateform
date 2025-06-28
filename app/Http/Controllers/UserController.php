@@ -26,7 +26,7 @@ class UserController extends Controller
     public function index()
     {
         try {
-            $users = User::with('roles')
+            $users = User::with(['roles', 'referringAgent'])
                 ->latest()
                 ->paginate(10);
                 

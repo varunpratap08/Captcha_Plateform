@@ -42,6 +42,7 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Phone</th>
+                            <th>Agent Referral</th>
                             <th>Roles</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -54,6 +55,17 @@
                                 <td>{{ $user->name }}</td>
                                 <td>{{ $user->email }}</td>
                                 <td>{{ $user->phone ?? 'N/A' }}</td>
+                                <td>
+                                    @if($user->referringAgent)
+                                        <span class="badge badge-info" title="Referred by {{ $user->referringAgent->name }}">
+                                            {{ $user->agent_referral_code }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">{{ $user->referringAgent->name }}</small>
+                                    @else
+                                        <span class="text-muted">No referral</span>
+                                    @endif
+                                </td>
                                 <td>
                                     @foreach($user->roles as $role)
                                         <span class="badge badge-primary">{{ $role->name }}</span>

@@ -34,6 +34,15 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Agent Plans</h5>
+                    <p class="card-text display-4">{{ $totalAgentPlans ?? 0 }}</p>
+                    <a href="{{ route('admin.agent-plans.index') }}" class="text-white">View plans →</a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row mt-4">
@@ -109,6 +118,53 @@
                         <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-outline-primary mt-2">View All Users</a>
                     @else
                         <p class="text-muted">No users found.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Agents</h5>
+                </div>
+                <div class="card-body">
+                    @if(isset($recentAgents) && $recentAgents->count() > 0)
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Phone</th>
+                                        <th>Referral Code</th>
+                                        <th>Status</th>
+                                        <th>Joined</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($recentAgents as $agent)
+                                        <tr>
+                                            <td>{{ $agent->id }}</td>
+                                            <td>{{ $agent->name }}</td>
+                                            <td>{{ $agent->phone_number }}</td>
+                                            <td><code>{{ $agent->referral_code }}</code></td>
+                                            <td>
+                                                <span class="badge bg-{{ $agent->status === 'active' ? 'success' : ($agent->status === 'inactive' ? 'warning' : 'danger') }}">
+                                                    {{ ucfirst($agent->status) }}
+                                                </span>
+                                            </td>
+                                            <td>{{ $agent->created_at->diffForHumans() }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <a href="{{ route('admin.agents.index') }}" class="btn btn-sm btn-outline-primary mt-2">View All Agents</a>
+                    @else
+                        <p class="text-muted">No agents found.</p>
                     @endif
                 </div>
             </div>

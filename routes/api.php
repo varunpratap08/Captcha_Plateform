@@ -11,6 +11,10 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AgentReferralController;
+use App\Http\Controllers\Api\Agent\WalletController as AgentWalletController;
+use App\Http\Controllers\Api\Agent\WithdrawalController as AgentWithdrawalController;
+use App\Http\Controllers\Admin\AgentWithdrawalRequestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -265,6 +269,14 @@ Route::prefix('v1')->group(function () {
     Route::post('verify-otp', [\App\Http\Controllers\Api\Auth\OtpController::class, 'verifyOtp']);
     Route::post('register', [RegisterController::class, 'register']);
     
+    // Agent routes - Public
+    Route::prefix('agent')->group(function () {
+        Route::post('send-otp', [\App\Http\Controllers\Api\Agent\OtpController::class, 'sendOtp']);
+        Route::post('verify-otp', [\App\Http\Controllers\Api\Agent\OtpController::class, 'verifyOtp']);
+        Route::post('register', [\App\Http\Controllers\Api\Agent\RegisterController::class, 'register']);
+        Route::post('login', [\App\Http\Controllers\Api\Agent\AuthController::class, 'login']);
+    });
+    
     // Debug route
     Route::get('debug', function () {
         return response()->json([
@@ -312,8 +324,8 @@ Route::prefix('v1')->group(function () {
         // Withdrawal requests (user create, admin list/approve/decline)
         Route::post('withdrawal-requests', [\App\Http\Controllers\Api\WithdrawalRequestController::class, 'store']); // user create
         Route::get('withdrawal-requests', [\App\Http\Controllers\Api\WithdrawalRequestController::class, 'index']); // admin list
-        Route::post('withdrawal-requests/{id}/approve', [\App\Http\Controllers\Api\WithdrawalRequestController::class, 'approve']); // admin approve
-        Route::post('withdrawal-requests/{id}/decline', [\App\Http\Controllers\Api\WithdrawalRequestController::class, 'decline']); // admin decline
+        Route::middleware(['auth:api'])->post('/admin/agent-withdrawal-requests/{id}/approve', [AgentWithdrawalRequestController::class, 'approve']);
+        Route::middleware(['auth:api'])->post('/admin/agent-withdrawal-requests/{id}/decline', [AgentWithdrawalRequestController::class, 'decline']);
 
         // Captcha solve routes
         Route::post('captcha/solve', [\App\Http\Controllers\Api\CaptchaSolveController::class, 'solveCaptcha']);
@@ -324,6 +336,44 @@ Route::prefix('v1')->group(function () {
         // New route for getting wallet
         Route::get('wallet', [\App\Http\Controllers\Api\WalletController::class, 'show']);
         Route::post('wallet/by-user', [\App\Http\Controllers\Api\WalletController::class, 'showByUserId']);
+    });
+    
+    // Agent protected routes (require agent JWT authentication)
+    Route::middleware(\App\Http\Middleware\AuthenticateAgent::class)->prefix('agent')->group(function () {
+        // Test route to debug authentication
+        Route::get('/test-auth', function() {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Agent authentication working',
+                'agent' => auth('agent')->user()
+            ]);
+        });
+        
+        // Agent profile routes
+        Route::prefix('profile')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\Agent\ProfileController::class, 'getProfile']);
+            Route::post('/complete', [\App\Http\Controllers\Api\Agent\ProfileController::class, 'completeProfile']);
+            Route::patch('/', [\App\Http\Controllers\Api\Agent\ProfileController::class, 'updateProfile']);
+            Route::post('/upload-image', [\App\Http\Controllers\Api\Agent\ProfileController::class, 'uploadProfileImage']);
+        });
+        
+        // Agent authentication routes
+        Route::post('logout', [\App\Http\Controllers\Api\Agent\AuthController::class, 'logout']);
+        Route::post('refresh', [\App\Http\Controllers\Api\Agent\AuthController::class, 'refresh']);
+        Route::get('me', [\App\Http\Controllers\Api\Agent\AuthController::class, 'me']);
+        
+        // Agent plan routes
+        Route::prefix('plans')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\Agent\PlanController::class, 'index']);
+            Route::get('/{id}', [\App\Http\Controllers\Api\Agent\PlanController::class, 'show']);
+            Route::post('/purchase', [\App\Http\Controllers\Api\Agent\PlanController::class, 'purchase']);
+            Route::get('/my-plan', [\App\Http\Controllers\Api\Agent\PlanController::class, 'myPlan']);
+            Route::get('/agent/details', [\App\Http\Controllers\Api\Agent\PlanController::class, 'agentDetails']);
+        });
+
+        // Agent withdrawal request routes
+        Route::middleware('auth:agent')->post('/agent/withdrawal-requests', [AgentWithdrawalController::class, 'store']);
+        Route::middleware('auth:agent')->get('/agent/withdrawal-requests', [AgentWithdrawalController::class, 'index']);
     });
     
     // New route for getting plans
@@ -382,5 +432,11 @@ Route::get('/debug-routes', function() {
         }, \Route::getRoutes()->getRoutes())
     ]);
 });
+
+// Agent referral tracking API
+Route::middleware('auth:agent')->get('/agent/referrals', [AgentReferralController::class, 'referrals']);
+
+// New route for agent wallet transaction history
+Route::middleware('auth:agent')->get('/agent/wallet/transactions', [AgentWalletController::class, 'transactions']);
 
     

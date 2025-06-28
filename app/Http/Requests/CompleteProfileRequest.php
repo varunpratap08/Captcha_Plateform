@@ -30,9 +30,9 @@ class CompleteProfileRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$userId],
             'profile_photo' => [
                 'nullable',
-                File::image()
-                    ->max(2048) // 2MB
-                    ->dimensions(Rule::dimensions()->maxWidth(1000)->maxHeight(1000)),
+                'image',
+                'max:2048',
+                'mimes:jpg,jpeg,png,webp',
             ],
             'date_of_birth' => ['required', 'date', 'before:today'],
             'upi_id' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/'],
@@ -40,8 +40,14 @@ class CompleteProfileRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:20',
-                'exists:users,referral_code',
-                Rule::unique('user_referrals', 'referral_code')->where('referred_id', $userId)
+                'exists:agents,referral_code',
+                function ($attribute, $value, $fail) use ($userId) {
+                    // Check if user already has an agent referral
+                    $user = \App\Models\User::find($userId);
+                    if ($user && $user->agent_id) {
+                        $fail('You have already used an agent referral code.');
+                    }
+                }
             ],
         ];
     }

@@ -40,7 +40,7 @@ class LoginWithOtpRequest extends FormRequest
                 'size:6',
             ],
             'role' => [
-                'required',
+                'sometimes',
                 'string',
                 'in:user,agent',
             ],

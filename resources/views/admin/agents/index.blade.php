@@ -175,6 +175,7 @@ body {
                     <td>{{ $agent->phone_number }}</td>
                     <td class="action-buttons">
                         <a href="{{ route('admin.agents.edit', $agent) }}" class="btn btn-edit">Edit</a>
+                        <a href="{{ route('admin.agents.show', $agent) }}" class="btn btn-info" style="background: #17a2b8; color: white;">View</a>
                         <form action="{{ route('admin.agents.destroy', $agent) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this agent?')">
                             @csrf
                             @method('DELETE')

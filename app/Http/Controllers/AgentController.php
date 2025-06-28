@@ -82,4 +82,10 @@ class AgentController extends Controller
         $agent->delete();
         return redirect()->route('agents.index')->with('success', 'Agent deleted.');
     }
+
+    public function show($id)
+    {
+        $agent = Agent::findOrFail($id);
+        return view('admin.agents.show', compact('agent'));
+    }
 }

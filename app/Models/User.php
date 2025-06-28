@@ -42,6 +42,8 @@ class User extends Authenticatable implements JWTSubject
         'country',
         'pincode',
         'referral_code',
+        'agent_id',
+        'agent_referral_code',
         'subscription_name',
         'purchased_date',
         'total_amount_paid',
@@ -148,5 +150,29 @@ class User extends Authenticatable implements JWTSubject
         })->join(' '));
 
         return 'https://ui-avatars.com/api/?name='.urlencode($name).'&color=7F9CF5&background=EBF4FF';
+    }
+
+    /**
+     * Get the agent who referred this user.
+     */
+    public function referringAgent()
+    {
+        return $this->belongsTo(Agent::class, 'agent_id');
+    }
+
+    /**
+     * Get the users referred by this user.
+     */
+    public function referredUsers()
+    {
+        return $this->hasMany(UserReferral::class, 'referrer_id');
+    }
+
+    /**
+     * Get the user who referred this user.
+     */
+    public function referrer()
+    {
+        return $this->hasOne(UserReferral::class, 'referred_id');
     }
 }

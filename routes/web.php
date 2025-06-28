@@ -14,6 +14,47 @@ use App\Http\Controllers\AgentController;
 |--------------------------------------------------------------------------
 */
 
+// Test route to verify basic routing is working
+Route::get('/test', function () {
+    return 'Laravel is working! Server is running on ' . request()->getHost() . ':' . request()->getPort();
+});
+
+// Debug route to check admin user
+Route::get('/debug/admin', function () {
+    $user = \App\Models\User::where('email', 'admin@example.com')->first();
+    
+    if (!$user) {
+        return 'Admin user not found. Please create an admin user.';
+    }
+    
+    return [
+        'user_exists' => true,
+        'user_id' => $user->id,
+        'user_email' => $user->email,
+        'user_name' => $user->name,
+        'has_admin_role' => $user->hasRole('admin'),
+        'roles' => $user->getRoleNames()->toArray(),
+        'is_authenticated' => auth()->check(),
+        'current_user' => auth()->user() ? auth()->user()->email : null
+    ];
+});
+
+// Fallback route for debugging
+Route::fallback(function () {
+    return response()->json([
+        'error' => 'Route not found',
+        'requested_url' => request()->url(),
+        'method' => request()->method(),
+        'available_routes' => [
+            'test' => '/test',
+            'debug_admin' => '/debug/admin',
+            'login' => '/login',
+            'api_test' => '/api/test',
+            'api_v1_test' => '/api/v1/test'
+        ]
+    ], 404);
+});
+
 // Redirect root to login page - must be before any other routes
 Route::redirect('/', '/login');
 
@@ -31,6 +72,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::resource('withdrawal-requests', WithdrawalRequestController::class);
     Route::resource('subscription-plans', SubscriptionPlanController::class);
+    Route::resource('agent-plans', \App\Http\Controllers\Admin\AgentPlanController::class);
     Route::resource('users', UserController::class);
     Route::resource('agents', AgentController::class);
 });
