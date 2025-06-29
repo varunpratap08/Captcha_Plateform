@@ -1,210 +1,526 @@
-@extends('layouts.admin')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #14b8a6;
+            --background-color: #f8f9fc;
+            --text-color: #1e293b;
+            --sidebar-bg: rgba(255, 255, 255, 0.95);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --accent-color: #60a5fa;
+        }
 
-@section('title', 'Agents')
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
 
-@push('styles')
-<style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    display: flex;
-}
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
 
-.sidebar {
-    width: 250px;
-    background: #f8f9fa;
-    min-height: 100vh;
-    padding: 20px;
-    position: fixed;
-}
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 1000;
+            transition: transform 0.3s ease-in-out;
+        }
 
-.logo img {
-    width: 100px;
-    margin-bottom: 40px;
-}
+        .sidebar .nav-link {
+            color: var(--text-color);
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+            transition: background 0.3s, color 0.3s;
+            display: flex;
+            align-items: center;
+        }
 
-.nav-item {
-    display: block;
-    padding: 10px 15px;
-    color: #333;
-    text-decoration: none;
-    margin-bottom: 10px;
-}
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
 
-.nav-item.active {
-    background: #007bff;
-    color: white;
-    border-radius: 5px;
-}
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
 
-.nav-item i {
-    margin-right: 10px;
-}
+        .sidebar .sidebar-header {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
 
-.main-content {
-    margin-left: 250px;
-    padding: 20px;
-    width: calc(100% - 250px);
-}
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            margin-left: 270px;
+            transition: margin-left 0.3s ease-in-out;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            animation: fadeIn 0.5s ease-in;
+        }
 
-.stats-card {
-    background: #f1f1f1;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    width: 200px;
-}
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-.stat-number {
-    font-size: 24px;
-    font-weight: bold;
-    margin: 10px 0;
-}
+        .header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
 
-.stat-change {
-    color: #28a745;
-    font-size: 14px;
-}
+        /* Stats Card */
+        .stats-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            text-align: center;
+            width: 220px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
 
-.search-bar input {
-    width: 300px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
 
-.create-agent-btn {
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
-    margin-bottom: 20px;
-}
+        .stats-card h3 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #6b7280;
+        }
 
-.agents-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
+        .stats-card .stat-number {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 10px 0;
+            color: var(--primary-color);
+        }
 
-.agents-table th,
-.agents-table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
+        .stats-card .stat-change {
+            font-size: 0.9rem;
+            color: var(--success-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
 
-.agents-table th {
-    background: #f8f9fa;
-}
+        /* Search Bar and Create Button */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-.action-buttons {
-    display: flex;
-    gap: 5px;
-}
+        .search-bar {
+            position: relative;
+            width: 350px;
+        }
 
-.action-buttons .btn {
-    padding: 5px 10px;
-    border-radius: 3px;
-    text-decoration: none;
-    font-size: 14px;
-}
+        .search-bar input {
+            width: 100%;
+            padding: 12px 40px 12px 16px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+            color: var(--text-color);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
 
-.action-buttons .btn-edit {
-    background: #007bff;
-    color: white;
-}
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
 
-.action-buttons .btn-delete {
-    background: #dc3545;
-    color: white;
-    border: none;
-    cursor: pointer;
-}
-</style>
-@endpush
+        .search-bar i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 1rem;
+        }
 
-@section('content')
-<div class="main-content">
-    <div class="header">
-        <h2>Agents</h2>
-        <div class="stats-card">
-            <h3>Total Agents</h3>
-            <p class="stat-number">{{ $agents->total() }}</p>
-            <p class="stat-change">+12% from last week</p>
+        .create-agent-btn {
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 12px 24px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .create-agent-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Agents Table */
+        .agents-table {
+            width: 100%;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .agents-table table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .agents-table th,
+        .agents-table td {
+            padding: 14px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .agents-table th {
+            font-weight: 500;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .agents-table tbody tr {
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .agents-table tbody tr:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-buttons .btn {
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(10px);
+        }
+
+        .action-buttons .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .action-buttons .btn-edit {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .action-buttons .btn-edit:hover {
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .action-buttons .btn-info {
+            background: var(--info-color);
+            color: white;
+        }
+
+        .action-buttons .btn-info:hover {
+            box-shadow: 0 4px 16px rgba(20, 184, 166, 0.3);
+        }
+
+        .action-buttons .btn-delete {
+            background: var(--error-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .action-buttons .btn-delete:hover {
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Pagination */
+        .pagination {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .pagination a, .pagination span {
+            padding: 8px 12px;
+            margin: 0 4px;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            color: var(--text-color);
+            text-decoration: none;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .pagination a:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .pagination .current {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .hamburger {
+                display: block;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 1100;
+                cursor: pointer;
+                font-size: 1.5rem;
+                color: var(--text-color);
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .stats-card {
+                width: 100%;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+
+            .search-bar {
+                width: 100%;
+            }
+
+            .agents-table table {
+                min-width: 800px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .hamburger {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">Admin Panel</div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="{{ route('admin.dashboard') }}" class="nav-link {{ Route::is('admin.dashboard') ? 'active' : '' }}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.agents.index') }}" class="nav-link {{ Route::is('admin.agents.*') ? 'active' : '' }}">
+                        <i class="fas fa-users"></i> Agents
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ Route::is('admin.users.*') ? 'active' : '' }}">
+                        <i class="fas fa-user"></i> Users
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.subscription-plans.index') }}" class="nav-link {{ Route::is('admin.subscription-plans.*') ? 'active' : '' }}">
+                        <i class="fas fa-file-alt"></i> Subscription Plans
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.agent-plans.index') }}" class="nav-link {{ Route::is('admin.agent-plans.*') ? 'active' : '' }}">
+                        <i class="fas fa-briefcase"></i> Agent Plans
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.withdrawal-requests.index') }}" class="nav-link {{ Route::is('admin.withdrawal-requests.*') ? 'active' : '' }}">
+                        <i class="fas fa-money-check-alt"></i> Withdrawal Requests
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            @if(session('success'))
+                <div style="background: #22c55e; color: #fff; padding: 14px 24px; border-radius: 8px; margin-bottom: 18px; font-weight: 500; font-size: 1.1rem;">
+                    <i class="fas fa-check-circle"></i> {{ session('success') }}
+                </div>
+            @endif
+            <div class="hamburger">☰</div>
+            <section class="container mx-auto">
+                <div class="header">
+                    <h2>Agents</h2>
+                    <a href="{{ route('admin.agents.create') }}" class="btn btn-primary" style="padding: 10px 20px; border-radius: 8px; background: linear-gradient(90deg, #3b82f6, #60a5fa); color: #fff; font-weight: 600; text-decoration: none;">+ Create Agent</a>
+                    <div class="stats-card">
+                        <h3>Total Agents</h3>
+                        <p class="stat-number">{{ $agents->total() }}</p>
+                        <p class="stat-change"><i class="fas fa-arrow-up"></i> +12% from last week</p>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="search-bar">
+                        <input type="text" placeholder="Search for anything..." id="searchInput">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <a href="{{ route('admin.agents.create') }}" class="create-agent-btn">
+                        <i class="fas fa-plus"></i> Create Agent
+                    </a>
+                </div>
+
+                <div class="agents-table">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Agent Name</th>
+                                    <th>Date of Joining</th>
+                                    <th>Total Earning</th>
+                                    <th>Total Withdrawal</th>
+                                    <th>Balance</th>
+                                    <th>Phone Number</th>
+                                    <th>Referral Code</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($agents as $agent)
+                                    <tr>
+                                        <td>{{ $agent->name }}</td>
+                                        <td>{{ $agent->created_at->format('d/m/Y') }}</td>
+                                        <td>₹{{ number_format($agent->total_earnings ?? 0, 2) }}</td>
+                                        <td>₹{{ number_format($agent->total_withdrawals ?? 0, 2) }}</td>
+                                        <td>₹{{ number_format($agent->wallet_balance ?? 0, 2) }}</td>
+                                        <td>{{ $agent->phone_number }}</td>
+                                        <td>{{ $agent->referral_code }}</td>
+                                        <td class="action-buttons">
+                                            <a href="{{ route('admin.agents.edit', $agent) }}" class="btn btn-edit">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <a href="{{ route('admin.agents.show', $agent) }}" class="btn btn-info">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            <form action="{{ route('admin.agents.destroy', $agent) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this agent?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-delete">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="pagination">
+                    {{ $agents->links() }}
+                </div>
+            </section>
         </div>
     </div>
 
-    <div class="content">
-        <div class="search-bar">
-            <input type="text" placeholder="Search for anything..." id="searchInput">
-        </div>
-        <a href="{{ route('admin.agents.create') }}" class="create-agent-btn">Create Agent</a>
-
-        <table class="agents-table">
-            <thead>
-                <tr>
-                    <th>Agent Name</th>
-                    <th>Date of Joining</th>
-                    <th>Total Earning</th>
-                    <th>Total Withdrawal</th>
-                    <th>Balance</th>
-                    <th>Phone number</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($agents as $agent)
-                <tr>
-                    <td>{{ $agent->name }}</td>
-                    <td>{{ $agent->created_at->format('d/m/Y') }}</td>
-                    <td>₹{{ number_format($agent->total_earnings ?? 0, 2) }}</td>
-                    <td>₹{{ number_format($agent->total_withdrawals ?? 0, 2) }}</td>
-                    <td>₹{{ number_format($agent->wallet_balance ?? 0, 2) }}</td>
-                    <td>{{ $agent->phone_number }}</td>
-                    <td class="action-buttons">
-                        <a href="{{ route('admin.agents.edit', $agent) }}" class="btn btn-edit">Edit</a>
-                        <a href="{{ route('admin.agents.show', $agent) }}" class="btn btn-info" style="background: #17a2b8; color: white;">View</a>
-                        <form action="{{ route('admin.agents.destroy', $agent) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this agent?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-delete">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-        
-        <div class="pagination" style="margin-top: 20px;">
-            {{ $agents->links() }}
-        </div>
-    </div>
-</div>
-
-@push('scripts')
-<script>
-    // Add search functionality
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        const searchText = this.value.toLowerCase();
-        const rows = document.querySelectorAll('.agents-table tbody tr');
-        
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchText) ? '' : 'none';
+    <script>
+        document.querySelector('.hamburger').addEventListener('click', () => {
+            document.querySelector('.sidebar').classList.toggle('active');
         });
-    });
-</script>
-@endpush
-@endsection
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const searchText = this.value.toLowerCase();
+            const rows = document.querySelectorAll('.agents-table tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchText) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>

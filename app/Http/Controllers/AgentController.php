@@ -58,25 +58,82 @@ class AgentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
             'phone_number' => 'required|string',
-            'referral_code' => 'required|string|unique:agents',
+            'date_of_birth' => 'nullable|date|before:today',
+            'email' => 'nullable|email',
+            'password' => 'required|string|min:6',
+            'upi_id' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'city' => 'nullable|string',
+            'state' => 'nullable|string',
+            'pincode' => 'nullable|string',
+            'aadhar_number' => 'nullable|string',
+            'pan_number' => 'nullable|string',
+            'gst_number' => 'nullable|string',
+            'bio' => 'nullable|string',
+            'profile_image' => 'nullable|image|max:2048|mimes:jpg,jpeg,png,webp',
+            'bank_account_number' => 'nullable|string',
+            'ifsc_code' => 'nullable|string',
+            'account_holder_name' => 'nullable|string',
+            'status' => 'nullable|string|in:active,inactive',
         ]);
 
-        Agent::create($request->only(['name', 'phone_number', 'referral_code']));
-        return redirect()->route('agents.index')->with('success', 'Agent created.');
+        $data = $request->only([
+            'name', 'phone_number', 'date_of_birth', 'email', 'upi_id', 'address', 'city', 'state', 'pincode',
+            'aadhar_number', 'pan_number', 'gst_number', 'bio', 'bank_account_number', 'ifsc_code', 'account_holder_name', 'status'
+        ]);
+        $data['password'] = bcrypt($request->password);
+        $data['referral_code'] = \App\Models\Agent::generateReferralCode();
+        $data['profile_completed'] = true;
+
+        if ($request->hasFile('profile_image')) {
+            $data['profile_image'] = $request->file('profile_image')->store('profile-images', 'public');
+        }
+
+        \App\Models\Agent::create($data);
+        return redirect()->route('admin.agents.index')->with('success', 'Agent created.');
+    }
+
+    public function edit(Agent $agent)
+    {
+        return view('admin.agents.edit', compact('agent'));
     }
 
     public function update(Request $request, Agent $agent)
     {
         $request->validate([
-            'name' => 'required|string',
+            'name' => 'required|string|max:255',
             'phone_number' => 'required|string',
-            'referral_code' => 'required|string|unique:agents,referral_code,' . $agent->id,
+            'date_of_birth' => 'nullable|date|before:today',
+            'email' => 'nullable|email',
+            'upi_id' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'city' => 'nullable|string',
+            'state' => 'nullable|string',
+            'pincode' => 'nullable|string',
+            'aadhar_number' => 'nullable|string',
+            'pan_number' => 'nullable|string',
+            'gst_number' => 'nullable|string',
+            'bio' => 'nullable|string',
+            'profile_image' => 'nullable|image|max:2048|mimes:jpg,jpeg,png,webp',
+            'bank_account_number' => 'nullable|string',
+            'ifsc_code' => 'nullable|string',
+            'account_holder_name' => 'nullable|string',
+            'status' => 'nullable|string|in:active,inactive',
         ]);
 
-        $agent->update($request->only(['name', 'phone_number', 'referral_code']));
-        return redirect()->route('agents.index')->with('success', 'Agent updated.');
+        $data = $request->only([
+            'name', 'phone_number', 'date_of_birth', 'email', 'upi_id', 'address', 'city', 'state', 'pincode',
+            'aadhar_number', 'pan_number', 'gst_number', 'bio', 'bank_account_number', 'ifsc_code', 'account_holder_name', 'status'
+        ]);
+
+        if ($request->hasFile('profile_image')) {
+            $data['profile_image'] = $request->file('profile_image')->store('profile-images', 'public');
+        }
+
+        $agent->update($data);
+        return redirect()->route('admin.agents.index')->with('success', 'Agent updated.');
     }
 
     public function destroy(Agent $agent)
@@ -89,5 +146,10 @@ class AgentController extends Controller
     {
         $agent = Agent::with(['referredUsers'])->findOrFail($id);
         return view('admin.agents.show', compact('agent'));
+    }
+
+    public function create()
+    {
+        return view('admin.agents.create');
     }
 }

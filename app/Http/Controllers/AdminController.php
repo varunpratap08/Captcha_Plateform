@@ -34,34 +34,28 @@ class AdminController extends Controller
     {
         try {
             $totalAgents = Agent::count();
-            $totalRevenue = User::sum('total_amount_paid');
-            $totalSubscriptions = SubscriptionPlan::count();
-            $totalAgentPlans = AgentPlan::count();
-            
-            // Get recent withdrawal requests (last 5)
-            $recentWithdrawals = WithdrawalRequest::with('user')
-                ->latest()
-                ->take(5)
-                ->get();
-                
-            // Get recent users (last 5)
-            $recentUsers = User::latest()
-                ->take(5)
-                ->get();
-            
-            // Get recent agents (last 5)
-            $recentAgents = Agent::latest()
-                ->take(5)
-                ->get();
-            
+            $totalUsers = User::count();
+            $totalUserSubscriptions = SubscriptionPlan::count();
+            $totalAgentSubscriptions = AgentPlan::count();
+            $totalUserSubscribed = User::whereNotNull('subscription_name')->count();
+            $totalReferrals = \App\Models\UserReferral::count();
+
+            // $totalRevenue = User::sum('total_amount_paid');
+            // $recentWithdrawals = WithdrawalRequest::with('user')->latest()->take(5)->get();
+            // $recentUsers = User::latest()->take(5)->get();
+            // $recentAgents = Agent::latest()->take(5)->get();
+
             return view('admin.dashboard', [
                 'totalAgents' => $totalAgents,
-                'totalRevenue' => $totalRevenue,
-                'totalSubscriptions' => $totalSubscriptions,
-                'totalAgentPlans' => $totalAgentPlans,
-                'recentWithdrawals' => $recentWithdrawals,
-                'recentUsers' => $recentUsers,
-                'recentAgents' => $recentAgents
+                'totalUsers' => $totalUsers,
+                'totalUserSubscriptions' => $totalUserSubscriptions,
+                'totalAgentSubscriptions' => $totalAgentSubscriptions,
+                'totalUserSubscribed' => $totalUserSubscribed,
+                'totalReferrals' => $totalReferrals,
+                // 'totalRevenue' => $totalRevenue,
+                // 'recentWithdrawals' => $recentWithdrawals,
+                // 'recentUsers' => $recentUsers,
+                // 'recentAgents' => $recentAgents,
             ]);
         } catch (\Exception $e) {
             // Log the error and redirect back with error message
