@@ -53,23 +53,23 @@ class ProfileController extends Controller
                     }
                 }
                 
-                // Handle referral code if provided
-                if (isset($data['referral_code'])) {
+                // Handle agent referral code if provided
+                if (isset($data['agent_referral_code'])) {
                     try {
-                        $agent = \App\Models\Agent::where('referral_code', $data['referral_code'])->first();
+                        $agent = \App\Models\Agent::where('referral_code', $data['agent_referral_code'])->first();
                         
                         // Ensure agent exists and is active
                         if ($agent && $agent->status === 'active') {
                             // Check if this user has already used an agent referral code
                             if (!$user->agent_id) {
                                 // Update user with agent referral
-                                $user->agent_id = $agent->id;
-                                $user->agent_referral_code = $data['referral_code'];
+                                $data['agent_id'] = $agent->id;
                                 
                                 // Credit agent wallet with referral reward from their current plan
                                 $plan = $agent->currentPlan();
                                 if ($plan && $plan->referral_reward > 0) {
                                     $agent->wallet_balance += $plan->referral_reward;
+                                    $agent->total_earnings += $plan->referral_reward;
                                     $agent->save();
                                     // Log the transaction
                                     \App\Models\AgentWalletTransaction::create([
@@ -88,18 +88,15 @@ class ProfileController extends Controller
                                 \Log::info('Agent referral recorded', [
                                     'user_id' => $user->id,
                                     'agent_id' => $agent->id,
-                                    'referral_code' => $data['referral_code']
+                                    'agent_referral_code' => $data['agent_referral_code']
                                 ]);
                             }
                         } else {
                             \Log::warning('Invalid or inactive agent referral code used', [
                                 'user_id' => $user->id,
-                                'referral_code' => $data['referral_code']
+                                'agent_referral_code' => $data['agent_referral_code']
                             ]);
                         }
-                        
-                        // Remove referral_code from data as it's not a direct user field
-                        unset($data['referral_code']);
                     } catch (\Exception $e) {
                         \Log::error('Agent referral processing failed', [
                             'user_id' => $user->id,
@@ -116,6 +113,7 @@ class ProfileController extends Controller
                 if (!$user->update($data)) {
                     throw new \RuntimeException('Failed to update user profile.');
                 }
+                $user->refresh();
                 
                 // Generate new token with updated user data
                 if (!$token = auth('api')->login($user)) {
@@ -125,7 +123,7 @@ class ProfileController extends Controller
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Profile completed successfully',
-                    'user' => $user->makeHidden(['otp', 'otp_expires_at']),
+                    'user' => $user->makeHidden(['otp', 'otp_expires_at'])->makeVisible(['agent_id', 'agent_referral_code']),
                     'profile_completed' => true,
                     'profile_photo_url' => $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : null,
                     'token' => [
@@ -173,7 +171,7 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
         return response()->json([
-            'user' => $user,
+            'user' => $user->makeVisible(['agent_id', 'agent_referral_code']),
             'requires_profile_completion' => !$user->isProfileComplete()
         ]);
     }
@@ -212,16 +210,36 @@ class ProfileController extends Controller
                         throw new \RuntimeException('Failed to upload profile photo. Please try again.');
                     }
                 }
-                // Remove referral_code if present (not editable after complete)
-                unset($data['referral_code']);
+                // Handle agent referral code if provided
+                if (isset($data['agent_referral_code'])) {
+                    try {
+                        $agent = \App\Models\Agent::where('referral_code', $data['agent_referral_code'])->first();
+                        if ($agent && $agent->status === 'active') {
+                            if (!$user->agent_id) {
+                                $data['agent_id'] = $agent->id;
+                            }
+                        } else {
+                            \Log::warning('Invalid or inactive agent referral code used in update', [
+                                'user_id' => $user->id,
+                                'agent_referral_code' => $data['agent_referral_code']
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('Agent referral processing failed in update', [
+                            'user_id' => $user->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
                 // Do not change profile_completed flag here
                 if (!$user->update($data)) {
                     throw new \RuntimeException('Failed to update user profile.');
                 }
+                $user->refresh();
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Profile updated successfully',
-                    'user' => $user->makeHidden(['otp', 'otp_expires_at'])
+                    'user' => $user->makeHidden(['otp', 'otp_expires_at'])->makeVisible(['agent_id', 'agent_referral_code'])
                 ]);
             });
         } catch (\Exception $e) {

@@ -36,13 +36,12 @@ class CompleteProfileRequest extends FormRequest
             ],
             'date_of_birth' => ['required', 'date', 'before:today'],
             'upi_id' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/'],
-            'referral_code' => [
+            'agent_referral_code' => [
                 'nullable',
                 'string',
                 'max:20',
                 'exists:agents,referral_code',
                 function ($attribute, $value, $fail) use ($userId) {
-                    // Check if user already has an agent referral
                     $user = \App\Models\User::find($userId);
                     if ($user && $user->agent_id) {
                         $fail('You have already used an agent referral code.');

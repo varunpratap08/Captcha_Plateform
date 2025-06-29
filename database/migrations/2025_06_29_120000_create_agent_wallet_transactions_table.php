@@ -12,8 +12,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('agent_id')->constrained('agents')->onDelete('cascade');
             $table->decimal('amount', 10, 2);
-            $table->enum('type', ['credit', 'debit']);
-            $table->string('description');
+            $table->string('type'); // 'credit' or 'debit'
+            $table->string('description')->nullable();
             $table->timestamps();
         });
     }

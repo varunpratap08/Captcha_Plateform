@@ -38,7 +38,17 @@ class ProfileController extends Controller
                         'total_withdrawals' => $agent->total_withdrawals,
                         'status' => $agent->status,
                         'created_at' => $agent->created_at,
-                        'updated_at' => $agent->updated_at
+                        'updated_at' => $agent->updated_at,
+                        'referred_users' => $agent->referredUsers->map(function($user) {
+                            return [
+                                'id' => $user->id,
+                                'name' => $user->name,
+                                'phone' => $user->phone,
+                                'profile_completed' => (bool) $user->profile_completed,
+                                'registered_at' => $user->created_at ? $user->created_at->toDateTimeString() : null,
+                            ];
+                        }),
+                        'referral_count' => $agent->referredUsers->count(),
                     ]
                 ]
             ]);

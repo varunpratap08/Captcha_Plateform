@@ -75,6 +75,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('agent-plans', \App\Http\Controllers\Admin\AgentPlanController::class);
     Route::resource('users', UserController::class);
     Route::resource('agents', AgentController::class);
+    Route::get('/all-withdrawal-requests', [AdminController::class, 'allWithdrawalRequests'])->name('all-withdrawal-requests');
+    Route::post('agent-withdrawal-requests/{id}/approve', [\App\Http\Controllers\Admin\AgentWithdrawalRequestController::class, 'approve'])->name('agent-withdrawal-requests.approve');
+    Route::post('agent-withdrawal-requests/{id}/decline', [\App\Http\Controllers\Admin\AgentWithdrawalRequestController::class, 'decline'])->name('agent-withdrawal-requests.decline');
 });
 
 // Comment out or remove the home route if not needed

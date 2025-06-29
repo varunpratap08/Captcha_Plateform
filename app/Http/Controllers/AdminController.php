@@ -221,4 +221,22 @@ class AdminController extends Controller
                 ->with('error', 'Failed to delete agent: ' . $e->getMessage());
         }
     }
+
+    public function allWithdrawalRequests()
+    {
+        $userWithdrawalRequests = \App\Models\WithdrawalRequest::with('user')
+            ->select('id', 'user_id', 'amount', 'upi_id', 'status', 'created_at')
+            ->orderByDesc('created_at')
+            ->get();
+
+        $agentWithdrawalRequests = \App\Models\AgentWithdrawalRequest::with('agent')
+            ->select('id', 'agent_id', 'amount', 'upi_id', 'status', 'created_at')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin.withdrawals_requests.index', [
+            'userWithdrawalRequests' => $userWithdrawalRequests,
+            'agentWithdrawalRequests' => $agentWithdrawalRequests
+        ]);
+    }
 }

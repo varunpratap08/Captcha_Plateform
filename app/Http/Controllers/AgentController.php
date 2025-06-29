@@ -25,7 +25,9 @@ class AgentController extends Controller
                 abort(500, 'The agents table does not exist. Please run migrations.');
             }
             
-            $agents = Agent::paginate(10);
+            // Eager load wallet and earnings fields
+            $agents = Agent::select('id', 'name', 'phone_number', 'created_at', 'wallet_balance', 'total_earnings', 'total_withdrawals')
+                ->paginate(10);
             \Log::info('Successfully fetched ' . $agents->count() . ' agents');
             
             return view('admin.agents.index', compact('agents'));
@@ -85,7 +87,7 @@ class AgentController extends Controller
 
     public function show($id)
     {
-        $agent = Agent::findOrFail($id);
+        $agent = Agent::with(['referredUsers'])->findOrFail($id);
         return view('admin.agents.show', compact('agent'));
     }
 }

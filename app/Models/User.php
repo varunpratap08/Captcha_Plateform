@@ -41,7 +41,6 @@ class User extends Authenticatable implements JWTSubject
         'state',
         'country',
         'pincode',
-        'referral_code',
         'agent_id',
         'agent_referral_code',
         'subscription_name',

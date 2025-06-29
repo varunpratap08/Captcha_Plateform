@@ -12,7 +12,7 @@ class WithdrawalRequestController extends Controller
      */
     public function index()
     {
-        $withdrawalRequests = WithdrawalRequest::with('user')->latest()->paginate(10);
+        $withdrawalRequests = WithdrawalRequest::with('user')->orderByDesc('created_at')->paginate(10);
         return view('admin.withdrawals_requests.index', compact('withdrawalRequests'));
     }
 

@@ -336,6 +336,9 @@ Route::prefix('v1')->group(function () {
         // New route for getting wallet
         Route::get('wallet', [\App\Http\Controllers\Api\WalletController::class, 'show']);
         Route::post('wallet/by-user', [\App\Http\Controllers\Api\WalletController::class, 'showByUserId']);
+
+        // User wallet add balance (testing only)
+        Route::post('wallet/add-balance', [\App\Http\Controllers\Api\WalletController::class, 'addBalance']);
     });
     
     // Agent protected routes (require agent JWT authentication)
@@ -374,6 +377,9 @@ Route::prefix('v1')->group(function () {
         // Agent withdrawal request routes
         Route::middleware('auth:agent')->post('/agent/withdrawal-requests', [AgentWithdrawalController::class, 'store']);
         Route::middleware('auth:agent')->get('/agent/withdrawal-requests', [AgentWithdrawalController::class, 'index']);
+
+        // Agent wallet add balance (testing only)
+        Route::post('wallet/add-balance', [\App\Http\Controllers\Api\Agent\WalletController::class, 'addBalance']);
     });
     
     // New route for getting plans

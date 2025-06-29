@@ -171,7 +171,7 @@ body {
                     <td>{{ $agent->created_at->format('d/m/Y') }}</td>
                     <td>₹{{ number_format($agent->total_earnings ?? 0, 2) }}</td>
                     <td>₹{{ number_format($agent->total_withdrawals ?? 0, 2) }}</td>
-                    <td>₹{{ number_format(($agent->total_earnings ?? 0) - ($agent->total_withdrawals ?? 0), 2) }}</td>
+                    <td>₹{{ number_format($agent->wallet_balance ?? 0, 2) }}</td>
                     <td>{{ $agent->phone_number }}</td>
                     <td class="action-buttons">
                         <a href="{{ route('admin.agents.edit', $agent) }}" class="btn btn-edit">Edit</a>

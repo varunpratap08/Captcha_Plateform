@@ -30,4 +30,29 @@ class WalletController extends Controller
             'transactions' => $transactions
         ]);
     }
+
+    // POST /api/v1/agent/wallet/add-balance (testing only)
+    public function addBalance(Request $request)
+    {
+        if (!app()->environment(['local', 'testing'])) {
+            return response()->json(['status' => 'error', 'message' => 'Not allowed in production'], 403);
+        }
+        $agent = Auth::guard('agent')->user();
+        $request->validate([
+            'amount' => 'required|numeric|min:1',
+        ]);
+        $agent->wallet_balance += $request->amount;
+        $agent->save();
+        $transaction = \App\Models\AgentWalletTransaction::create([
+            'agent_id' => $agent->id,
+            'amount' => $request->amount,
+            'type' => 'credit',
+            'description' => 'Test top-up',
+        ]);
+        return response()->json([
+            'status' => 'success',
+            'wallet_balance' => $agent->wallet_balance,
+            'transaction' => $transaction,
+        ]);
+    }
 } 
