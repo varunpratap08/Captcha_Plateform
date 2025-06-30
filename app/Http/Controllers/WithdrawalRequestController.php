@@ -63,15 +63,32 @@ class WithdrawalRequestController extends Controller
      */
     public function update(Request $request, WithdrawalRequest $withdrawalRequest)
     {
-        $validated = $request->validate([
-            'subscription_name' => 'required|string|max:255',
-            'status' => 'required|boolean',
-        ]);
-
-        $withdrawalRequest->update($validated);
-
-        return redirect()->route('withdrawal-requests.index')
-            ->with('success', 'Withdrawal request updated successfully');
+        $action = $request->input('action');
+        if ($action === 'approve' && $withdrawalRequest->status === 'pending') {
+            // Approve logic
+            $withdrawalRequest->status = 'approved';
+            $withdrawalRequest->approved_at = now();
+            $withdrawalRequest->admin_id = auth()->id();
+            $withdrawalRequest->save();
+            // Notify user
+            if ($withdrawalRequest->user) {
+                $withdrawalRequest->user->notify(new \App\Notifications\WithdrawalRequestStatusNotification('approved', $withdrawalRequest));
+            }
+            return redirect()->back()->with('success', 'Withdrawal request approved and user notified.');
+        } elseif ($action === 'decline' && $withdrawalRequest->status === 'pending') {
+            // Decline logic
+            $withdrawalRequest->status = 'declined';
+            $withdrawalRequest->approved_at = now();
+            $withdrawalRequest->admin_id = auth()->id();
+            $withdrawalRequest->remarks = $request->input('remarks');
+            $withdrawalRequest->save();
+            // Notify user
+            if ($withdrawalRequest->user) {
+                $withdrawalRequest->user->notify(new \App\Notifications\WithdrawalRequestStatusNotification('declined', $withdrawalRequest));
+            }
+            return redirect()->back()->with('success', 'Withdrawal request declined and user notified.');
+        }
+        return redirect()->back()->with('error', 'Invalid action or request already processed.');
     }
 
     /**

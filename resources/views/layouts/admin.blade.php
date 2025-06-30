@@ -29,7 +29,7 @@
             <a href="{{ route('admin.agents.index') }}" class="flex items-center px-4 py-2 rounded-lg transition-colors {{ request()->routeIs('admin.agents.*') ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-700' }}">
                 <i class="fas fa-user-tie mr-3"></i> Agents
             </a>
-            <a href="{{ route('admin.subscription-plans.index') }}" class="flex items-center px-4 py-2 rounded-lg transition-colors {{ request()->routeIs('admin.subscription-plans.*') ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-700' }}">
+            <a href="{{ route('admin.subscription_plans.index') }}" class="flex items-center px-4 py-2 rounded-lg transition-colors {{ request()->routeIs('admin.subscription_plans.*') ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-700' }}">
                 <i class="fas fa-cubes mr-3"></i> Subscription Plans
             </a>
             <a href="{{ route('admin.agent-plans.index') }}" class="flex items-center px-4 py-2 rounded-lg transition-colors {{ request()->routeIs('admin.agent-plans.*') ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-700' }}">

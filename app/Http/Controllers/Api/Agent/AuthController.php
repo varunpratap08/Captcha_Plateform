@@ -90,7 +90,10 @@ class AuthController extends Controller
                         'wallet_balance' => $agent->wallet_balance,
                         'total_earnings' => $agent->total_earnings,
                         'total_withdrawals' => $agent->total_withdrawals,
-                        'status' => $agent->status
+                        'status' => $agent->status,
+                        'profile_image' => $agent->profile_image,
+                        'profile_image_url' => $agent->profile_image ? asset('storage/' . $agent->profile_image) : null,
+                        'upi_id' => $agent->upi_id,
                     ]
                 ]
             ]);
@@ -164,7 +167,10 @@ class AuthController extends Controller
                         'wallet_balance' => $agent->wallet_balance,
                         'total_earnings' => $agent->total_earnings,
                         'total_withdrawals' => $agent->total_withdrawals,
-                        'status' => $agent->status
+                        'status' => $agent->status,
+                        'profile_image' => $agent->profile_image,
+                        'profile_image_url' => $agent->profile_image ? asset('storage/' . $agent->profile_image) : null,
+                        'upi_id' => $agent->upi_id,
                     ]
                 ]
             ]);
@@ -206,23 +212,10 @@ class AuthController extends Controller
                         'wallet_balance' => $agent->wallet_balance,
                         'total_earnings' => $agent->total_earnings,
                         'total_withdrawals' => $agent->total_withdrawals,
-                        'upi_id' => $agent->upi_id,
-                        'bank_account_number' => $agent->bank_account_number,
-                        'ifsc_code' => $agent->ifsc_code,
-                        'account_holder_name' => $agent->account_holder_name,
-                        'address' => $agent->address,
-                        'city' => $agent->city,
-                        'state' => $agent->state,
-                        'pincode' => $agent->pincode,
-                        'profile_image' => $agent->profile_image,
-                        'aadhar_number' => $agent->aadhar_number,
-                        'pan_number' => $agent->pan_number,
-                        'gst_number' => $agent->gst_number,
-                        'bio' => $agent->bio,
                         'status' => $agent->status,
-                        'last_login_at' => $agent->last_login_at,
-                        'created_at' => $agent->created_at,
-                        'updated_at' => $agent->updated_at
+                        'profile_image' => $agent->profile_image,
+                        'profile_image_url' => $agent->profile_image ? asset('storage/' . $agent->profile_image) : null,
+                        'upi_id' => $agent->upi_id,
                     ]
                 ]
             ]);

@@ -26,7 +26,7 @@ class AgentController extends Controller
             }
             
             // Eager load wallet and earnings fields
-            $agents = Agent::select('id', 'name', 'phone_number', 'created_at', 'wallet_balance', 'total_earnings', 'total_withdrawals')
+            $agents = Agent::select('id', 'name', 'phone_number', 'created_at', 'wallet_balance', 'total_earnings', 'total_withdrawals', 'referral_code')
                 ->paginate(10);
             \Log::info('Successfully fetched ' . $agents->count() . ' agents');
             
@@ -89,6 +89,15 @@ class AgentController extends Controller
 
         if ($request->hasFile('profile_image')) {
             $data['profile_image'] = $request->file('profile_image')->store('profile-images', 'public');
+        } else if ($request->filled('profile_image_url') && filter_var($request->input('profile_image_url'), FILTER_VALIDATE_URL)) {
+            $url = $request->input('profile_image_url');
+            $imageContents = @file_get_contents($url);
+            if ($imageContents !== false) {
+                $extension = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+                $filename = 'profile-images/' . uniqid('agent_admin_' . time() . '_') . '.' . $extension;
+                \Storage::disk('public')->put($filename, $imageContents);
+                $data['profile_image'] = $filename;
+            }
         }
 
         \App\Models\Agent::create($data);
@@ -130,6 +139,15 @@ class AgentController extends Controller
 
         if ($request->hasFile('profile_image')) {
             $data['profile_image'] = $request->file('profile_image')->store('profile-images', 'public');
+        } else if ($request->filled('profile_image_url') && filter_var($request->input('profile_image_url'), FILTER_VALIDATE_URL)) {
+            $url = $request->input('profile_image_url');
+            $imageContents = @file_get_contents($url);
+            if ($imageContents !== false) {
+                $extension = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+                $filename = 'profile-images/' . uniqid('agent_admin_' . time() . '_') . '.' . $extension;
+                \Storage::disk('public')->put($filename, $imageContents);
+                $data['profile_image'] = $filename;
+            }
         }
 
         $agent->update($data);
@@ -151,5 +169,23 @@ class AgentController extends Controller
     public function create()
     {
         return view('admin.agents.create');
+    }
+
+    /**
+     * Get a list of all agents (for contact matching)
+     * GET /api/v1/agents/list
+     */
+    public function list(Request $request)
+    {
+        $agents = \App\Models\Agent::select('id', 'name', 'phone_number', 'profile_image')->get();
+        $agents = $agents->map(function($agent) {
+            return [
+                'id' => $agent->id,
+                'name' => $agent->name,
+                'phone_number' => $agent->phone_number,
+                'profile_image_url' => $agent->profile_image ? asset('storage/' . $agent->profile_image) : null,
+            ];
+        });
+        return response()->json(['status' => 'success', 'agents' => $agents]);
     }
 }

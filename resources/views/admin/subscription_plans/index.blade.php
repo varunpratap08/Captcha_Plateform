@@ -379,7 +379,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('admin.subscription-plans.index') }}" class="nav-link {{ Route::is('admin.subscription-plans.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.subscription_plans.index') }}" class="nav-link {{ Route::is('admin.subscription_plans.*') ? 'active' : '' }}">
                         <i class="fas fa-file-alt"></i> Subscription Plans
                     </a>
                 </li>
@@ -413,7 +413,7 @@
                     <h1>
                         <i class="fas fa-file-alt mr-2"></i> Subscription Plans
                     </h1>
-                    <a href="{{ route('admin.subscription-plans.create') }}" class="btn-primary">
+                    <a href="{{ route('admin.subscription_plans.create') }}" class="btn-primary">
                         <i class="fas fa-plus mr-2"></i> Create Plan
                     </a>
                 </div>
@@ -429,7 +429,7 @@
                                 <tr>
                                     <th class="sortable">Name</th>
                                     <th class="sortable">Icon</th>
-                                    <th class="sortable">Caption Limit</th>
+                                    <th class="sortable">Captcha Limit</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -449,10 +449,11 @@
                                         <td>{{ $plan->caption_limit ?? 'N/A' }}</td>
                                         <td>
                                             <div class="action-group">
-                                                <a href="{{ route('admin.subscription-plans.edit', $plan) }}" class="btn-primary btn-primary-sm">
+                                                <a href="{{ route('admin.subscription_plans.show', $plan->id) }}" class="btn-primary btn-primary-sm mr-1" title="View"><i class="fas fa-eye"></i> View</a>
+                                                <a href="{{ route('admin.subscription_plans.edit', $plan) }}" class="btn-primary btn-primary-sm">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </a>
-                                                <form action="{{ route('admin.subscription-plans.destroy', $plan) }}" method="POST" style="display:inline;">
+                                                <form action="{{ route('admin.subscription_plans.destroy', $plan) }}" method="POST" style="display:inline;">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn-danger btn-danger-sm" onclick="return confirm('Are you sure you want to delete this plan?')">

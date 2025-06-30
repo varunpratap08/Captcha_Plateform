@@ -35,21 +35,51 @@ class ProfileController extends Controller
                 
                 $data = $request->validated();
                 
-                // Handle profile photo upload if present
+                // Handle profile photo upload if present (file or URL)
                 if ($request->hasFile('profile_photo')) {
                     try {
-                        // Delete old profile photo if exists
                         if ($user->profile_photo_path) {
                             Storage::disk('public')->delete($user->profile_photo_path);
                         }
                         $path = $request->file('profile_photo')->store('profile-photos', 'public');
                         $data['profile_photo_path'] = $path;
+                        \Log::info('Profile photo uploaded', [
+                            'user_id' => $user->id,
+                            'profile_photo_path' => $path
+                        ]);
                     } catch (\Exception $e) {
                         \Log::error('Profile photo upload failed', [
                             'user_id' => $user->id,
                             'error' => $e->getMessage()
                         ]);
                         throw new \RuntimeException('Failed to upload profile photo. Please try again.');
+                    }
+                } else if ($request->filled('profile_photo_url') && filter_var($request->input('profile_photo_url'), FILTER_VALIDATE_URL)) {
+                    try {
+                        if ($user->profile_photo_path) {
+                            Storage::disk('public')->delete($user->profile_photo_path);
+                        }
+                        $url = $request->input('profile_photo_url');
+                        $imageContents = @file_get_contents($url);
+                        if ($imageContents === false) {
+                            throw new \RuntimeException('Failed to download image from URL.');
+                        }
+                        $extension = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+                        $filename = 'profile-photos/' . uniqid('user_' . $user->id . '_') . '.' . $extension;
+                        Storage::disk('public')->put($filename, $imageContents);
+                        $data['profile_photo_path'] = $filename;
+                        \Log::info('Profile photo downloaded from URL', [
+                            'user_id' => $user->id,
+                            'profile_photo_path' => $filename,
+                            'source_url' => $url
+                        ]);
+                    } catch (\Exception $e) {
+                        \Log::error('Profile photo download failed', [
+                            'user_id' => $user->id,
+                            'error' => $e->getMessage(),
+                            'source_url' => $request->input('profile_photo_url')
+                        ]);
+                        throw new \RuntimeException('Failed to download profile photo from URL. Please try again.');
                     }
                 }
                 
@@ -113,6 +143,10 @@ class ProfileController extends Controller
                 if (!$user->update($data)) {
                     throw new \RuntimeException('Failed to update user profile.');
                 }
+                \Log::info('User updated after profile completion', [
+                    'user_id' => $user->id,
+                    'profile_photo_path' => $user->profile_photo_path
+                ]);
                 $user->refresh();
                 
                 // Generate new token with updated user data
@@ -123,15 +157,23 @@ class ProfileController extends Controller
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Profile completed successfully',
-                    'user' => $user->makeHidden(['otp', 'otp_expires_at'])->makeVisible(['agent_id', 'agent_referral_code']),
-                    'profile_completed' => true,
-                    'profile_photo_url' => $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : null,
-                    'token' => [
+                    'data' => [
                         'access_token' => $token,
                         'token_type' => 'bearer',
-                        'expires_in' => auth('api')->factory()->getTTL() * 60 // in seconds
-                    ],
-                    'redirect_to' => '/dashboard'
+                        'expires_in' => auth('api')->factory()->getTTL() * 60,
+                        'user' => [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'phone' => $user->phone,
+                            'is_verified' => (bool)$user->is_verified,
+                            'requires_profile_completion' => !$user->isProfileComplete(),
+                            'upi_id' => $user->upi_id,
+                        ],
+                        'profile_photo_url' => $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : null,
+                        'profile_completed' => (bool) $user->name,
+                        'redirect_to' => $user->name ? '/dashboard' : '/complete-profile'
+                    ]
                 ]);
             });
         } catch (\Exception $e) {
@@ -172,15 +214,18 @@ class ProfileController extends Controller
         $user = Auth::user();
         return response()->json([
             'user' => $user->makeVisible(['agent_id', 'agent_referral_code']),
+            'profile_photo_url' => $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : null,
             'requires_profile_completion' => !$user->isProfileComplete()
         ]);
     }
 
     /**
      * Update user profile (edit profile)
-     * 
+     *
      * @param CompleteProfileRequest $request
      * @return JsonResponse
+     *
+     * Note: This endpoint requires 'multipart/form-data' if uploading a profile photo.
      */
     public function updateProfile(CompleteProfileRequest $request): JsonResponse
     {
@@ -194,7 +239,7 @@ class ProfileController extends Controller
                     ], 401);
                 }
                 $data = $request->validated();
-                // Handle profile photo upload if present
+                // Handle profile photo upload if present (file or URL)
                 if ($request->hasFile('profile_photo')) {
                     try {
                         if ($user->profile_photo_path) {
@@ -208,6 +253,33 @@ class ProfileController extends Controller
                             'error' => $e->getMessage()
                         ]);
                         throw new \RuntimeException('Failed to upload profile photo. Please try again.');
+                    }
+                } else if ($request->filled('profile_photo_url') && filter_var($request->input('profile_photo_url'), FILTER_VALIDATE_URL)) {
+                    try {
+                        if ($user->profile_photo_path) {
+                            Storage::disk('public')->delete($user->profile_photo_path);
+                        }
+                        $url = $request->input('profile_photo_url');
+                        $imageContents = @file_get_contents($url);
+                        if ($imageContents === false) {
+                            throw new \RuntimeException('Failed to download image from URL.');
+                        }
+                        $extension = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+                        $filename = 'profile-photos/' . uniqid('user_' . $user->id . '_') . '.' . $extension;
+                        Storage::disk('public')->put($filename, $imageContents);
+                        $data['profile_photo_path'] = $filename;
+                        \Log::info('Profile photo downloaded from URL', [
+                            'user_id' => $user->id,
+                            'profile_photo_path' => $filename,
+                            'source_url' => $url
+                        ]);
+                    } catch (\Exception $e) {
+                        \Log::error('Profile photo download failed', [
+                            'user_id' => $user->id,
+                            'error' => $e->getMessage(),
+                            'source_url' => $request->input('profile_photo_url')
+                        ]);
+                        throw new \RuntimeException('Failed to download profile photo from URL. Please try again.');
                     }
                 }
                 // Handle agent referral code if provided
@@ -239,7 +311,8 @@ class ProfileController extends Controller
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Profile updated successfully',
-                    'user' => $user->makeHidden(['otp', 'otp_expires_at'])->makeVisible(['agent_id', 'agent_referral_code'])
+                    'user' => $user->makeHidden(['otp', 'otp_expires_at'])->makeVisible(['agent_id', 'agent_referral_code']),
+                    'profile_photo_url' => $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : null,
                 ]);
             });
         } catch (\Exception $e) {

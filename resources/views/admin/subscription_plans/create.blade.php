@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -359,7 +358,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('admin.subscription-plans.index') }}" class="nav-link {{ Route::is('admin.subscription-plans.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.subscription_plans.index') }}" class="nav-link {{ Route::is('admin.subscription_plans.*') ? 'active' : '' }}">
                         <i class="fas fa-file-alt"></i> Subscription Plans
                     </a>
                 </li>
@@ -387,7 +386,7 @@
                             <i class="fas fa-file-alt mr-2"></i> Create Subscription Plan
                         </h2>
                     </div>
-                    <form action="{{ route('admin.subscription-plans.store') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('admin.subscription_plans.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="form-grid">
                             <!-- Plan Name -->
@@ -530,7 +529,7 @@
                             <button type="submit" class="btn-primary">
                                 <i class="fas fa-save mr-2"></i> Create Plan
                             </button>
-                            <a href="{{ route('admin.subscription-plans.index') }}" class="btn-secondary">
+                            <a href="{{ route('admin.subscription_plans.index') }}" class="btn-secondary">
                                 <i class="fas fa-arrow-left mr-2"></i> Cancel
                             </a>
                         </div>

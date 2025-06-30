@@ -76,7 +76,7 @@ class SubscriptionPlanController extends Controller
         $subscription_plan->min_daily_earning = $validated['min_daily_earning'] ?? null;
         $subscription_plan->save();
 
-        return redirect()->route('admin.subscription-plans.index')->with('success', 'Plan created.');
+        return redirect()->route('admin.subscription_plans.index')->with('success', 'Plan created.');
     }
 
     public function update(Request $request, SubscriptionPlan $subscription_plan)
@@ -108,12 +108,21 @@ class SubscriptionPlanController extends Controller
         $validated['earnings'] = json_encode($earnings);
 
         $subscription_plan->update($validated);
-        return redirect()->route('admin.subscription-plans.index')->with('success', 'Plan updated successfully.');
+        return redirect()->route('admin.subscription_plans.index')->with('success', 'Plan updated successfully.');
     }
 
     public function destroy(SubscriptionPlan $subscription_plan)
     {
         $subscription_plan->delete();
-        return redirect()->route('admin.subscription-plans.index')->with('success', 'Plan deleted.');
+        return redirect()->route('admin.subscription_plans.index')->with('success', 'Plan deleted.');
+    }
+
+    /**
+     * Display the specified subscription plan.
+     */
+    public function show($id)
+    {
+        $subscription_plan = SubscriptionPlan::findOrFail($id);
+        return view('admin.subscription_plans.show', compact('subscription_plan'));
     }
 }

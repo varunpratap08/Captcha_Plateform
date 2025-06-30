@@ -18,11 +18,11 @@ class AgentWithdrawalRequestController extends Controller
         $admin = Auth::user();
         $withdrawal = AgentWithdrawalRequest::with('agent')->findOrFail($id);
         if ($withdrawal->status !== 'pending') {
-            return response()->json(['status' => 'error', 'message' => 'Request already processed.'], 400);
+            return redirect()->back()->with('error', 'Request already processed.');
         }
         $agent = $withdrawal->agent;
         if ($agent->wallet_balance < $withdrawal->amount) {
-            return response()->json(['status' => 'error', 'message' => 'Insufficient wallet balance.'], 400);
+            return redirect()->back()->with('error', 'Insufficient wallet balance.');
         }
         DB::transaction(function () use ($withdrawal, $agent, $admin) {
             $agent->wallet_balance -= $withdrawal->amount;
@@ -31,29 +31,37 @@ class AgentWithdrawalRequestController extends Controller
             $withdrawal->approved_at = now();
             $withdrawal->admin_id = $admin->id;
             $withdrawal->save();
-            AgentWalletTransaction::create([
+            \App\Models\AgentWalletTransaction::create([
                 'agent_id' => $agent->id,
                 'amount' => $withdrawal->amount,
                 'type' => 'debit',
                 'description' => 'Withdrawal approved',
             ]);
         });
-        return response()->json(['status' => 'success', 'message' => 'Withdrawal approved.', 'wallet_balance' => $agent->wallet_balance]);
+        // Notify agent
+        if ($agent) {
+            $agent->notify(new \App\Notifications\AgentWithdrawalRequestStatusNotification('approved', $withdrawal));
+        }
+        return redirect()->back()->with('success', 'Agent withdrawal request approved and agent notified.');
     }
 
     // Decline agent withdrawal request
     public function decline($id, Request $request)
     {
         $admin = Auth::user();
-        $withdrawal = AgentWithdrawalRequest::findOrFail($id);
+        $withdrawal = AgentWithdrawalRequest::with('agent')->findOrFail($id);
         if ($withdrawal->status !== 'pending') {
-            return response()->json(['status' => 'error', 'message' => 'Request already processed.'], 400);
+            return redirect()->back()->with('error', 'Request already processed.');
         }
         $withdrawal->status = 'declined';
         $withdrawal->approved_at = now();
         $withdrawal->admin_id = $admin->id;
         $withdrawal->remarks = $request->remarks;
         $withdrawal->save();
-        return response()->json(['status' => 'success', 'message' => 'Withdrawal declined.']);
+        // Notify agent
+        if ($withdrawal->agent) {
+            $withdrawal->agent->notify(new \App\Notifications\AgentWithdrawalRequestStatusNotification('declined', $withdrawal));
+        }
+        return redirect()->back()->with('success', 'Agent withdrawal request declined and agent notified.');
     }
 } 

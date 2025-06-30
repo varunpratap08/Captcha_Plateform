@@ -38,6 +38,9 @@ class AuthController extends Controller
             Log::debug('Request validated', ['request_id' => $requestId]);
             // Find the user by phone number
             $user = User::where('phone', $request->phone)->first();
+            if ($user) {
+                $user->refresh(); // Ensure latest data, including profile_photo_path
+            }
 
             // Check if user exists
             if (!$user) {
@@ -127,7 +130,16 @@ class AuthController extends Controller
                     'access_token' => $token,
                     'token_type' => 'bearer',
                     'expires_in' => auth('api')->factory()->getTTL() * 60,
-                    'user' => $user,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'phone' => $user->phone,
+                        'is_verified' => (bool)$user->is_verified,
+                        'requires_profile_completion' => !$user->isProfileComplete(),
+                        'upi_id' => $user->upi_id,
+                    ],
+                    'profile_photo_url' => $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : null,
                     'profile_completed' => (bool) $user->name,
                     'redirect_to' => $user->name ? '/dashboard' : '/complete-profile'
                 ]

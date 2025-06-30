@@ -26,8 +26,9 @@ class RegisterUserRequest extends FormRequest
             'phone' => [
                 'required',
                 'string',
-                'regex:/^[0-9]{10}$/',
-                'max:15',
+                'min:6',
+                'max:20',
+                'regex:/^[+0-9\- ]+$/',
                 function ($attribute, $value, $fail) {
                     $user = \App\Models\User::where('phone', $value)->first();
                     if ($user && $user->is_verified) {

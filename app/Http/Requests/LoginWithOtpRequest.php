@@ -25,7 +25,9 @@ class LoginWithOtpRequest extends FormRequest
             'phone' => [
                 'required',
                 'string',
-                'regex:/^[0-9]{10}$/',
+                'min:6',
+                'max:20',
+                'regex:/^[+0-9\- ]+$/',
                 'exists:users,phone',
                 function ($attribute, $value, $fail) {
                     $user = \App\Models\User::where('phone', $value)->first();

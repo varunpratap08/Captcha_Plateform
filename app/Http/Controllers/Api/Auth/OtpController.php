@@ -45,7 +45,9 @@ class OtpController extends Controller
                 'phone' => [
                     'required',
                     'string',
-                    'regex:/^[0-9]{10}$/'
+                    'min:6',
+                    'max:20',
+                    'regex:/^[+0-9\- ]+$/'
                 ]
             ]);
             
@@ -179,7 +181,9 @@ class OtpController extends Controller
                 'phone' => [
                     'required',
                     'string',
-                    'regex:/^[0-9]{10}$/'
+                    'min:6',
+                    'max:20',
+                    'regex:/^[+0-9\- ]+$/'
                 ],
                 'otp' => [
                     'required',

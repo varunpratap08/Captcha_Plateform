@@ -228,9 +228,11 @@ class AdminController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        $showAll = true;
         return view('admin.withdrawals_requests.index', [
             'userWithdrawalRequests' => $userWithdrawalRequests,
-            'agentWithdrawalRequests' => $agentWithdrawalRequests
+            'agentWithdrawalRequests' => $agentWithdrawalRequests,
+            'showAll' => $showAll
         ]);
     }
 }

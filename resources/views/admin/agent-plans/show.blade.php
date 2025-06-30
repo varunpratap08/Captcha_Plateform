@@ -368,7 +368,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('admin.subscription-plans.index') }}" class="nav-link {{ Route::is('admin.subscription-plans.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.subscription_plans.index') }}" class="nav-link {{ Route::is('admin.subscription_plans.*') ? 'active' : '' }}">
                         <i class="fas fa-file-alt"></i> Subscription Plans
                     </a>
                 </li>

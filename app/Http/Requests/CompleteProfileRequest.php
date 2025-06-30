@@ -35,7 +35,7 @@ class CompleteProfileRequest extends FormRequest
                 'mimes:jpg,jpeg,png,webp',
             ],
             'date_of_birth' => ['required', 'date', 'before:today'],
-            'upi_id' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/'],
+            'upi_id' => ['required', 'string', 'max:50'],
             'agent_referral_code' => [
                 'nullable',
                 'string',
@@ -48,6 +48,7 @@ class CompleteProfileRequest extends FormRequest
                     }
                 }
             ],
+            'profile_photo_url' => ['nullable', 'string', 'url'],
         ];
     }
     

@@ -406,7 +406,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('admin.subscription-plans.index') }}" class="nav-link {{ Route::is('admin.subscription-plans.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.subscription_plans.index') }}" class="nav-link {{ Route::is('admin..*') ? 'active' : '' }}">
                         <i class="fas fa-file-alt"></i> Subscription Plans
                     </a>
                 </li>
@@ -434,7 +434,6 @@
             <section class="container mx-auto">
                 <div class="header">
                     <h2>Agents</h2>
-                    <a href="{{ route('admin.agents.create') }}" class="btn btn-primary" style="padding: 10px 20px; border-radius: 8px; background: linear-gradient(90deg, #3b82f6, #60a5fa); color: #fff; font-weight: 600; text-decoration: none;">+ Create Agent</a>
                     <div class="stats-card">
                         <h3>Total Agents</h3>
                         <p class="stat-number">{{ $agents->total() }}</p>

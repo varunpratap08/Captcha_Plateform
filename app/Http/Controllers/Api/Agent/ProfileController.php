@@ -30,6 +30,7 @@ class ProfileController extends Controller
                         'email' => $agent->email,
                         'upi_id' => $agent->upi_id,
                         'profile_image' => $agent->profile_image,
+                        'profile_image_url' => $agent->profile_image ? asset('storage/' . $agent->profile_image) : null,
                         'is_verified' => $agent->is_verified,
                         'profile_completed' => $agent->profile_completed,
                         'referral_code' => $agent->referral_code,
@@ -94,7 +95,7 @@ class ProfileController extends Controller
                 'profile_completed' => true
             ];
 
-            // Handle profile image upload if present
+            // Handle profile image upload if present (file or URL)
             if ($request->hasFile('profile_image')) {
                 try {
                     // Delete old image if exists
@@ -109,6 +110,33 @@ class ProfileController extends Controller
                         'error' => $e->getMessage()
                     ]);
                     throw new \RuntimeException('Failed to upload profile image. Please try again.');
+                }
+            } else if ($request->filled('profile_image_url') && filter_var($request->input('profile_image_url'), FILTER_VALIDATE_URL)) {
+                try {
+                    if ($agent->profile_image) {
+                        Storage::disk('public')->delete($agent->profile_image);
+                    }
+                    $url = $request->input('profile_image_url');
+                    $imageContents = @file_get_contents($url);
+                    if ($imageContents === false) {
+                        throw new \RuntimeException('Failed to download image from URL.');
+                    }
+                    $extension = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+                    $filename = 'profile-images/' . $agent->id . '/' . uniqid('agent_' . $agent->id . '_') . '.' . $extension;
+                    Storage::disk('public')->put($filename, $imageContents);
+                    $updateData['profile_image'] = $filename;
+                    Log::info('Agent profile image downloaded from URL', [
+                        'agent_id' => $agent->id,
+                        'profile_image' => $filename,
+                        'source_url' => $url
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Agent profile image download failed', [
+                        'agent_id' => $agent->id,
+                        'error' => $e->getMessage(),
+                        'source_url' => $request->input('profile_image_url')
+                    ]);
+                    throw new \RuntimeException('Failed to download profile image from URL. Please try again.');
                 }
             }
 
@@ -185,7 +213,7 @@ class ProfileController extends Controller
                 'name', 'date_of_birth', 'email', 'upi_id'
             ]);
 
-            // Handle profile image upload if present
+            // Handle profile image upload if present (file or URL)
             if ($request->hasFile('profile_image')) {
                 try {
                     if ($agent->profile_image) {
@@ -199,6 +227,33 @@ class ProfileController extends Controller
                         'error' => $e->getMessage()
                     ]);
                     throw new \RuntimeException('Failed to upload profile image. Please try again.');
+                }
+            } else if ($request->filled('profile_image_url') && filter_var($request->input('profile_image_url'), FILTER_VALIDATE_URL)) {
+                try {
+                    if ($agent->profile_image) {
+                        Storage::disk('public')->delete($agent->profile_image);
+                    }
+                    $url = $request->input('profile_image_url');
+                    $imageContents = @file_get_contents($url);
+                    if ($imageContents === false) {
+                        throw new \RuntimeException('Failed to download image from URL.');
+                    }
+                    $extension = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+                    $filename = 'profile-images/' . $agent->id . '/' . uniqid('agent_' . $agent->id . '_') . '.' . $extension;
+                    Storage::disk('public')->put($filename, $imageContents);
+                    $updateData['profile_image'] = $filename;
+                    Log::info('Agent profile image downloaded from URL', [
+                        'agent_id' => $agent->id,
+                        'profile_image' => $filename,
+                        'source_url' => $url
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Agent profile image download failed', [
+                        'agent_id' => $agent->id,
+                        'error' => $e->getMessage(),
+                        'source_url' => $request->input('profile_image_url')
+                    ]);
+                    throw new \RuntimeException('Failed to download profile image from URL. Please try again.');
                 }
             }
 

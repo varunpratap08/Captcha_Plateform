@@ -203,7 +203,7 @@ System: fixed;
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('admin.subscription-plans.index') }}" class="nav-link">
+                    <a href="{{ route('admin.subscription_plans.index') }}" class="nav-link">
                         <i class="fas fa-file-alt"></i> Subscription Plans
                     </a>
                 </li>

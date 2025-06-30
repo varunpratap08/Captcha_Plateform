@@ -33,29 +33,36 @@ class CaptchaSolveController extends Controller
         }
         // Record solve
         CaptchaSolve::create(['user_id' => $user->id]);
-        // Calculate earning per captcha
-        $earning = 1; // default
-        if ($plan && !empty($plan->earnings) && is_array($plan->earnings)) {
-            // Use the first earning amount if available
-            $firstEarning = $plan->earnings[0]['amount'] ?? null;
-            if ($firstEarning) {
-                $earning = (float)$firstEarning;
+        // Calculate earning per captcha based on range
+        $currentLevel = CaptchaSolve::where('user_id', $user->id)->count(); // after this solve
+        $earning = 0;
+        $earnings = is_string($plan->earnings) ? json_decode($plan->earnings, true) : $plan->earnings;
+        if (is_array($earnings)) {
+            foreach ($earnings as $range) {
+                if (!empty($range['range']) && !empty($range['amount'])) {
+                    // Range format: "start-end" (e.g., "1-50")
+                    [$start, $end] = array_map('trim', explode('-', $range['range']));
+                    if ($currentLevel >= (int)$start && $currentLevel <= (int)$end) {
+                        $earning = (float)$range['amount'];
+                        break;
+                    }
+                }
             }
-        } elseif ($plan && isset($plan->cost)) {
-            $earning = (float)$plan->cost;
+        }
+        if ($earning <= 0) {
+            $earning = 0; // fallback, no earning if not in any range
         }
         // Add to wallet and log transaction
         $user->wallet_balance += $earning;
-        $user->level = CaptchaSolve::where('user_id', $user->id)->count();
+        $user->level = $currentLevel;
         $user->save();
-        
         \App\Models\WalletTransaction::create([
             'user_id' => $user->id,
             'amount' => $earning,
             'type' => 'earning',
             'description' => 'Earning for solving captcha',
         ]);
-        return response()->json(['status' => 'success', 'message' => 'Captcha solved.', 'level' => (int)$user->level, 'remaining' => $limit - $todayCount - 1, 'wallet_balance' => $user->wallet_balance]);
+        return response()->json(['status' => 'success', 'message' => 'Captcha solved.', 'level' => (int)$user->level, 'remaining' => $limit - $todayCount - 1, 'wallet_balance' => $user->wallet_balance, 'earned' => $earning]);
     }
 
     // GET /api/v1/captcha/level
@@ -72,7 +79,8 @@ class CaptchaSolveController extends Controller
             'status' => 'success',
             'level' => $level,
             'remaining_today' => max(0, $limit - $todayCount),
-            'plan_limit' => $limit
+            'plan_limit' => $limit,
+            'wallet_balance' => $user->wallet_balance,
         ]);
     }
 
@@ -98,7 +106,8 @@ class CaptchaSolveController extends Controller
             'user_id' => $user->id,
             'level' => $level,
             'remaining_today' => max(0, $limit - $todayCount),
-            'plan_limit' => $limit
+            'plan_limit' => $limit,
+            'wallet_balance' => $user->wallet_balance,
         ]);
     }
 
@@ -124,7 +133,8 @@ class CaptchaSolveController extends Controller
             'user_id' => $user->id,
             'level' => $level,
             'remaining_today' => max(0, $limit - $todayCount),
-            'plan_limit' => $limit
+            'plan_limit' => $limit,
+            'wallet_balance' => $user->wallet_balance,
         ]);
     }
 } 

@@ -48,6 +48,7 @@ class User extends Authenticatable implements JWTSubject
         'total_amount_paid',
         'level',
         'profile_completed',
+        'upi_id',
     ];
     
     /**
@@ -76,6 +77,7 @@ class User extends Authenticatable implements JWTSubject
         'profile_completed' => 'boolean',
         'date_of_birth' => 'date',
         'purchased_date' => 'datetime',
+        'last_login_at' => 'datetime',
     ];
 
     /**

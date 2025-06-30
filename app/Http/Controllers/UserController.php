@@ -85,10 +85,19 @@ class UserController extends Controller
                 'email_verified_at' => $request->has('email_verified') ? now() : null,
             ];
 
-            // Handle profile photo upload
+            // Handle profile photo upload (file or URL)
             if ($request->hasFile('profile_photo')) {
                 $path = $request->file('profile_photo')->store('profile-photos', 'public');
                 $userData['profile_photo_path'] = $path;
+            } else if ($request->filled('profile_photo_url') && filter_var($request->input('profile_photo_url'), FILTER_VALIDATE_URL)) {
+                $url = $request->input('profile_photo_url');
+                $imageContents = @file_get_contents($url);
+                if ($imageContents !== false) {
+                    $extension = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+                    $filename = 'profile-photos/' . uniqid('user_admin_' . time() . '_') . '.' . $extension;
+                    \Storage::disk('public')->put($filename, $imageContents);
+                    $userData['profile_photo_path'] = $filename;
+                }
             }
 
             // Handle referral code
@@ -187,7 +196,7 @@ class UserController extends Controller
                 $updateData['password'] = bcrypt($validated['password']);
             }
             
-            // Handle profile photo upload
+            // Handle profile photo upload (file or URL)
             if ($request->hasFile('profile_photo')) {
                 // Delete old photo if exists
                 if ($user->profile_photo_path) {
@@ -195,6 +204,18 @@ class UserController extends Controller
                 }
                 $path = $request->file('profile_photo')->store('profile-photos', 'public');
                 $updateData['profile_photo_path'] = $path;
+            } else if ($request->filled('profile_photo_url') && filter_var($request->input('profile_photo_url'), FILTER_VALIDATE_URL)) {
+                if ($user->profile_photo_path) {
+                    \Storage::disk('public')->delete($user->profile_photo_path);
+                }
+                $url = $request->input('profile_photo_url');
+                $imageContents = @file_get_contents($url);
+                if ($imageContents !== false) {
+                    $extension = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+                    $filename = 'profile-photos/' . uniqid('user_admin_' . time() . '_') . '.' . $extension;
+                    \Storage::disk('public')->put($filename, $imageContents);
+                    $updateData['profile_photo_path'] = $filename;
+                }
             } elseif ($request->has('remove_photo') && $user->profile_photo_path) {
                 // Remove profile photo if requested
                 \Storage::disk('public')->delete($user->profile_photo_path);

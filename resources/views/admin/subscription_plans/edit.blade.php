@@ -81,7 +81,7 @@
         .main-content {
             flex: 1;
             padding: 30px;
-            margin-left: 250px;
+            margin-left: 270px;
             transition: margin-left 0.3s ease-in-out;
             min-height: 100vh;
             display: flex;
@@ -361,7 +361,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('admin.subscription-plans.index') }}" class="nav-link {{ Route::is('admin.subscription-plans.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.subscription_plans.index') }}" class="nav-link {{ Route::is('admin.subscription_plans.*') ? 'active' : '' }}">
                         <i class="fas fa-file-alt"></i> Subscription Plans
                     </a>
                 </li>
@@ -389,7 +389,7 @@
                             <i class="fas fa-edit mr-2"></i> Edit Subscription Plan
                         </h2>
                     </div>
-                    <form action="{{ route('admin.subscription-plans.update', $subscription_plan) }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('admin.subscription_plans.update', $subscription_plan) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                         <div class="form-grid">
@@ -561,7 +561,7 @@
                             <button type="submit" class="btn-primary">
                                 <i class="fas fa-save mr-2"></i> Update Plan
                             </button>
-                            <a href="{{ route('admin.subscription-plans.index') }}" class="btn-secondary">
+                            <a href="{{ route('admin.subscription_plans.index') }}" class="btn-secondary">
                                 <i class="fas fa-arrow-left mr-2"></i> Cancel
                             </a>
                         </div>

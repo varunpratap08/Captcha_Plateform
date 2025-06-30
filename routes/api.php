@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\AgentReferralController;
 use App\Http\Controllers\Api\Agent\WalletController as AgentWalletController;
 use App\Http\Controllers\Api\Agent\WithdrawalController as AgentWithdrawalController;
 use App\Http\Controllers\Admin\AgentWithdrawalRequestController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\AgentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -339,6 +341,10 @@ Route::prefix('v1')->group(function () {
 
         // User wallet add balance (testing only)
         Route::post('wallet/add-balance', [\App\Http\Controllers\Api\WalletController::class, 'addBalance']);
+
+        // New route for getting users list
+        Route::get('users/list', [\App\Http\Controllers\Api\UserController::class, 'list']);
+        Route::get('agents/list', [\App\Http\Controllers\AgentController::class, 'list']);
     });
     
     // Agent protected routes (require agent JWT authentication)
@@ -384,6 +390,8 @@ Route::prefix('v1')->group(function () {
     
     // New route for getting plans
     Route::get('plans', [\App\Http\Controllers\Api\SubscriptionPlanController::class, 'index']);
+    Route::post('plans/by-user-id', [\App\Http\Controllers\Api\SubscriptionPlanController::class, 'getPlanByUserId'])->middleware('jwt.admin');
+    Route::post('plans/by-user-id-user', [\App\Http\Controllers\Api\SubscriptionPlanController::class, 'getPlanByUserId'])->middleware('auth:api');
 });
 Route::post('/test-register', function () {
     return response()->json([
@@ -444,5 +452,11 @@ Route::middleware('auth:agent')->get('/agent/referrals', [AgentReferralControlle
 
 // New route for agent wallet transaction history
 Route::middleware('auth:agent')->get('/agent/wallet/transactions', [AgentWalletController::class, 'transactions']);
+
+// Allow both users and agents to access the list endpoints
+Route::middleware(['auth:api,auth:agent'])->group(function () {
+    Route::get('users/list', [\App\Http\Controllers\Api\UserController::class, 'list']);
+    Route::get('agents/list', [\App\Http\Controllers\AgentController::class, 'list']);
+});
 
     

@@ -24,7 +24,13 @@ class OtpController extends Controller
             ]);
 
             $request->validate([
-                'phone_number' => 'required|string|regex:/^[0-9]{10}$/'
+                'phone_number' => [
+                    'required',
+                    'string',
+                    'min:6',
+                    'max:20',
+                    'regex:/^[+0-9\- ]+$/'
+                ]
             ]);
 
             $phoneNumber = $request->phone_number;
@@ -112,8 +118,18 @@ class OtpController extends Controller
     {
         try {
             $request->validate([
-                'phone_number' => 'required|string|regex:/^[0-9]{10}$/',
-                'otp' => 'required|string|size:6'
+                'phone_number' => [
+                    'required',
+                    'string',
+                    'min:6',
+                    'max:20',
+                    'regex:/^[+0-9\- ]+$/'
+                ],
+                'otp' => [
+                    'required',
+                    'string',
+                    'size:6'
+                ]
             ]);
 
             $phoneNumber = $request->phone_number;
