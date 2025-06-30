@@ -62,28 +62,14 @@ class AgentController extends Controller
             'phone_number' => 'required|string',
             'date_of_birth' => 'nullable|date|before:today',
             'email' => 'nullable|email',
-            'password' => 'required|string|min:6',
             'upi_id' => 'nullable|string|max:255',
-            'address' => 'nullable|string',
-            'city' => 'nullable|string',
-            'state' => 'nullable|string',
-            'pincode' => 'nullable|string',
-            'aadhar_number' => 'nullable|string',
-            'pan_number' => 'nullable|string',
-            'gst_number' => 'nullable|string',
-            'bio' => 'nullable|string',
             'profile_image' => 'nullable|image|max:2048|mimes:jpg,jpeg,png,webp',
-            'bank_account_number' => 'nullable|string',
-            'ifsc_code' => 'nullable|string',
-            'account_holder_name' => 'nullable|string',
             'status' => 'nullable|string|in:active,inactive',
         ]);
 
         $data = $request->only([
-            'name', 'phone_number', 'date_of_birth', 'email', 'upi_id', 'address', 'city', 'state', 'pincode',
-            'aadhar_number', 'pan_number', 'gst_number', 'bio', 'bank_account_number', 'ifsc_code', 'account_holder_name', 'status'
+            'name', 'phone_number', 'date_of_birth', 'email', 'upi_id', 'status'
         ]);
-        $data['password'] = bcrypt($request->password);
         $data['referral_code'] = \App\Models\Agent::generateReferralCode();
         $data['profile_completed'] = true;
 

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -349,6 +348,13 @@
                         <h2>
                             <i class="fas fa-user-circle mr-2"></i> Agent Profile
                         </h2>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
+                        @if($agent->profile_image)
+                            <img src="{{ asset('storage/' . $agent->profile_image) }}" alt="Profile Image" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; box-shadow: 0 4px 16px rgba(59,130,246,0.15); border: 4px solid #fff; background: #f3f4f6;">
+                        @else
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode($agent->name) }}&size=120&background=3b82f6&color=fff" alt="Default Avatar" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; box-shadow: 0 4px 16px rgba(59,130,246,0.15); border: 4px solid #fff; background: #f3f4f6;">
+                        @endif
                     </div>
                     <div class="card-content">
                         <p>
