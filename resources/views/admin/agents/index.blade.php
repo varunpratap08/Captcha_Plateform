@@ -390,7 +390,7 @@
     <div class="wrapper">
         <!-- Sidebar -->
         <nav class="sidebar">
-            <div class="sidebar-header">Admin Panel</div>
+            <img src="{{ asset('images/logo c2c 2.png') }}" alt="Logo" style="max-width: 160px; margin: 0 auto 10px; display: block;">
             <ul class="nav flex-column">
                 <li class="nav-item">
                     <a href="{{ route('admin.dashboard') }}" class="nav-link {{ Route::is('admin.dashboard') ? 'active' : '' }}">

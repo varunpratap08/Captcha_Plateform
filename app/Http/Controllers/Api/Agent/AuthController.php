@@ -21,7 +21,6 @@ class AuthController extends Controller
             $request->validate([
                 'phone_number' => 'required|string|regex:/^[0-9]{10}$/',
                 'otp' => 'required|string|size:6',
-                'role' => 'required|string|in:agent'
             ]);
 
             // Find agent by phone number
@@ -76,7 +75,7 @@ class AuthController extends Controller
                 'status' => 'success',
                 'message' => 'Login successful',
                 'data' => [
-                    'token' => $token,
+                    'access_token' => $token,
                     'token_type' => 'bearer',
                     'expires_in' => auth('agent')->factory()->getTTL() * 60,
                     'agent' => [

@@ -38,7 +38,10 @@ class AdminController extends Controller
             $totalUserSubscriptions = SubscriptionPlan::count();
             $totalAgentSubscriptions = AgentPlan::count();
             $totalUserSubscribed = User::whereNotNull('subscription_name')->count();
-            $totalReferrals = \App\Models\UserReferral::count();
+            $totalReferrals = User::whereNotNull('agent_id')->count();
+            $latestUser = User::latest()->first();
+            $latestAgent = Agent::latest()->first();
+            $withdrawalRequestCount = WithdrawalRequest::count();
 
             // $totalRevenue = User::sum('total_amount_paid');
             // $recentWithdrawals = WithdrawalRequest::with('user')->latest()->take(5)->get();
@@ -52,6 +55,9 @@ class AdminController extends Controller
                 'totalAgentSubscriptions' => $totalAgentSubscriptions,
                 'totalUserSubscribed' => $totalUserSubscribed,
                 'totalReferrals' => $totalReferrals,
+                'latestUser' => $latestUser,
+                'latestAgent' => $latestAgent,
+                'withdrawalRequestCount' => $withdrawalRequestCount,
                 // 'totalRevenue' => $totalRevenue,
                 // 'recentWithdrawals' => $recentWithdrawals,
                 // 'recentUsers' => $recentUsers,

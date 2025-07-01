@@ -213,7 +213,7 @@
     <div class="wrapper">
         <!-- Sidebar -->
         <nav class="sidebar">
-            <div class="sidebar-header">Admin Panel</div>
+            <img src="{{ asset('images/logo c2c 2.png') }}" alt="Logo" style="max-width: 160px; margin: 0 auto 10px; display: block;">
             <ul class="nav flex-column">
                 <li class="nav-item">
                     <a href="{{ route('admin.dashboard') }}" class="nav-link active">
@@ -320,16 +320,19 @@
                                                     {{ $plan->is_active ? 'Active' : 'Inactive' }}
                                                 </span>
                                             </td>
-                                            <td class="text-sm font-medium">
-                                                <div class="flex space-x-2">
-                                                    <a href="{{ route('admin.agent-plans.show', $plan) }}" class="text-indigo-600 hover:text-indigo-900">View</a>
-                                                    <a href="{{ route('admin.agent-plans.edit', $plan) }}" class="text-blue-600 hover:text-blue-900">Edit</a>
-                                                    <form action="{{ route('admin.agent-plans.destroy', $plan) }}" method="POST">
+                                            <td>
+                                                <div class="d-flex gap-2">
+                                                    <a href="{{ route('admin.agent-plans.show', $plan) }}" class="btn btn-info btn-sm" title="View">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{{ route('admin.agent-plans.edit', $plan) }}" class="btn btn-primary btn-sm" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <form action="{{ route('admin.agent-plans.destroy', $plan) }}" method="POST" style="display:inline;">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:text-red-900" 
-                                                                onclick="return confirm('Are you sure you want to delete this plan?')">
-                                                            Delete
+                                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this plan?')" title="Delete">
+                                                            <i class="fas fa-trash"></i>
                                                         </button>
                                                     </form>
                                                 </div>

@@ -22,6 +22,13 @@ class ProfileController extends Controller
      */
     public function completeProfile(CompleteProfileRequest $request): JsonResponse
     {
+        \Log::info('Profile complete request', [
+            'all' => $request->all(),
+            'files' => $request->files->all(),
+            'headers' => $request->headers->all(),
+            'content_type' => $request->header('content-type'),
+        ]);
+
         try {
             return DB::transaction(function () use ($request) {
                 $user = Auth::user();
@@ -56,6 +63,20 @@ class ProfileController extends Controller
                         ]);
                     } catch (\Exception $e) {
                         \Log::error('Profile photo upload failed', [
+                            'user_id' => $user->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        throw new \RuntimeException('Failed to upload profile photo. Please try again.');
+                    }
+                } else if ($request->hasFile('profile_photo_url')) {
+                    try {
+                        if ($user->profile_photo_path) {
+                            Storage::disk('public')->delete($user->profile_photo_path);
+                        }
+                        $path = $request->file('profile_photo_url')->store('profile-photos', 'public');
+                        $data['profile_photo_path'] = $path;
+                    } catch (\Exception $e) {
+                        \Log::error('Profile photo upload failed (profile_photo_url as file)', [
                             'user_id' => $user->id,
                             'error' => $e->getMessage()
                         ]);
@@ -241,6 +262,13 @@ class ProfileController extends Controller
      */
     public function updateProfile(CompleteProfileRequest $request): JsonResponse
     {
+        \Log::info('Profile update request', [
+            'all' => $request->all(),
+            'files' => $request->files->all(),
+            'headers' => $request->headers->all(),
+            'content_type' => $request->header('content-type'),
+        ]);
+
         try {
             return DB::transaction(function () use ($request) {
                 $user = Auth::user();
@@ -261,6 +289,20 @@ class ProfileController extends Controller
                         $data['profile_photo_path'] = $path;
                     } catch (\Exception $e) {
                         \Log::error('Profile photo upload failed', [
+                            'user_id' => $user->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        throw new \RuntimeException('Failed to upload profile photo. Please try again.');
+                    }
+                } else if ($request->hasFile('profile_photo_url')) {
+                    try {
+                        if ($user->profile_photo_path) {
+                            Storage::disk('public')->delete($user->profile_photo_path);
+                        }
+                        $path = $request->file('profile_photo_url')->store('profile-photos', 'public');
+                        $data['profile_photo_path'] = $path;
+                    } catch (\Exception $e) {
+                        \Log::error('Profile photo upload failed (profile_photo_url as file)', [
                             'user_id' => $user->id,
                             'error' => $e->getMessage()
                         ]);

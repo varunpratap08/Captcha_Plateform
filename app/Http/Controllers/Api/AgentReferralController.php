@@ -36,6 +36,18 @@ class AgentReferralController extends Controller
                 'registered_at' => $user->created_at->toDateTimeString(),
             ];
         });
+        // If no real users, add a dummy user
+        if ($users->isEmpty()) {
+            $users = collect([
+                [
+                    'id' => 0,
+                    'name' => 'Dummy User',
+                    'phone' => '9999*****00',
+                    'profile_completed' => false,
+                    'registered_at' => now()->toDateTimeString(),
+                ]
+            ]);
+        }
 
         // Optionally, calculate referral earnings if you have such logic
         // $totalReferralEarnings = ...;

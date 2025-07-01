@@ -78,6 +78,7 @@ class CaptchaSolveController extends Controller
         return response()->json([
             'status' => 'success',
             'level' => $level,
+            'total_level' => $level, // all-time total
             'remaining_today' => max(0, $limit - $todayCount),
             'plan_limit' => $limit,
             'wallet_balance' => $user->wallet_balance,
@@ -135,6 +136,44 @@ class CaptchaSolveController extends Controller
             'remaining_today' => max(0, $limit - $todayCount),
             'plan_limit' => $limit,
             'wallet_balance' => $user->wallet_balance,
+        ]);
+    }
+
+    // GET /api/v1/captcha/todays-earning
+    public function getTodaysEarning(Request $request)
+    {
+        $user = Auth::user();
+        $plan = SubscriptionPlan::where('name', $user->subscription_name)->first();
+        if (!$plan) {
+            return response()->json(['status' => 'error', 'message' => 'No active plan.'], 400);
+        }
+        $earnings = is_string($plan->earnings) ? json_decode($plan->earnings, true) : $plan->earnings;
+        $todaySolves = \App\Models\CaptchaSolve::where('user_id', $user->id)
+            ->whereDate('created_at', now()->toDateString())
+            ->orderBy('created_at', 'asc')
+            ->get();
+        $totalEarning = 0;
+        $solveNumber = 0;
+        foreach ($todaySolves as $solve) {
+            $solveNumber++;
+            $earning = 0;
+            if (is_array($earnings)) {
+                foreach ($earnings as $range) {
+                    if (!empty($range['range']) && !empty($range['amount'])) {
+                        [$start, $end] = array_map('trim', explode('-', $range['range']));
+                        if ($solveNumber >= (int)$start && $solveNumber <= (int)$end) {
+                            $earning = (float)$range['amount'];
+                            break;
+                        }
+                    }
+                }
+            }
+            $totalEarning += $earning;
+        }
+        return response()->json([
+            'status' => 'success',
+            'todays_earning' => round($totalEarning, 2),
+            'solves_today' => $solveNumber,
         ]);
     }
 } 

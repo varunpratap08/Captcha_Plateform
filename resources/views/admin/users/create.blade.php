@@ -550,21 +550,22 @@
                                 @enderror
                             </div>
 
-                            <!-- Password -->
+                            <!-- UPI ID -->
                             <div class="form-group">
-                                <label for="password">Password <span class="text-danger">*</span></label>
-                                <input type="password" class="@error('password') error @enderror" id="password" name="password" required>
-                                <i class="fas fa-lock icon"></i>
-                                @error('password')
+                                <label for="upi_id">UPI ID <span class="text-danger">*</span></label>
+                                <input type="text" class="@error('upi_id') error @enderror" id="upi_id" name="upi_id" value="{{ old('upi_id') }}" required>
+                                @error('upi_id')
                                     <span class="error">{{ $message }}</span>
                                 @enderror
                             </div>
 
-                            <!-- Confirm Password -->
+                            <!-- Date of Birth -->
                             <div class="form-group">
-                                <label for="password_confirmation">Confirm Password <span class="text-danger">*</span></label>
-                                <input type="password" id="password_confirmation" name="password_confirmation" required>
-                                <i class="fas fa-lock icon"></i>
+                                <label for="dob">Date of Birth <span class="text-danger">*</span></label>
+                                <input type="date" class="@error('dob') error @enderror" id="dob" name="dob" value="{{ old('dob') }}" required>
+                                @error('dob')
+                                    <span class="error">{{ $message }}</span>
+                                @enderror
                             </div>
 
                             <!-- Profile Photo -->
@@ -601,13 +602,14 @@
                             </div>
 
                             <!-- User Roles -->
-                            <div class="form-group col-span-2">
-                                <label>User Roles <span class="text-danger">*</span></label>
+                            <div class="form-group">
+                                <label>User Role <span class="text-danger">*</span></label>
                                 @foreach($roles as $id => $name)
-                                    <div class="custom-checkbox">
-                                        <input type="checkbox" id="role_{{ $id }}" name="roles[]" value="{{ $id }}" {{ in_array($id, old('roles', [])) || $loop->first ? 'checked' : '' }}>
+                                    @if(strtolower($name) === 'user')
+                                        <input type="checkbox" id="role_{{ $id }}" name="roles[]" value="{{ $id }}" checked disabled>
                                         <label for="role_{{ $id }}">{{ $name }}</label>
-                                    </div>
+                                        <input type="hidden" name="roles[]" value="{{ $id }}">
+                                    @endif
                                 @endforeach
                                 @error('roles')
                                     <span class="error">{{ $message }}</span>

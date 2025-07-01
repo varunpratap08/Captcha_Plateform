@@ -314,7 +314,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('profile')->group(function () {
             Route::get('/', [ProfileController::class, 'getProfile']);
             Route::post('/complete', [ProfileController::class, 'completeProfile']);
-            Route::patch('/', [ProfileController::class, 'updateProfile']);
+            Route::post('/', [ProfileController::class, 'updateProfile']);
         });
         
         // Logout
@@ -326,6 +326,7 @@ Route::prefix('v1')->group(function () {
         // Withdrawal requests (user create, admin list/approve/decline)
         Route::post('withdrawal-requests', [\App\Http\Controllers\Api\WithdrawalRequestController::class, 'store']); // user create
         Route::get('withdrawal-requests', [\App\Http\Controllers\Api\WithdrawalRequestController::class, 'index']); // admin list
+        Route::get('withdrawal-requests/history', [\App\Http\Controllers\Api\WithdrawalRequestController::class, 'history']); // user history
         Route::middleware(['auth:api'])->post('/admin/agent-withdrawal-requests/{id}/approve', [AgentWithdrawalRequestController::class, 'approve']);
         Route::middleware(['auth:api'])->post('/admin/agent-withdrawal-requests/{id}/decline', [AgentWithdrawalRequestController::class, 'decline']);
 
@@ -334,6 +335,7 @@ Route::prefix('v1')->group(function () {
         Route::get('captcha/level', [\App\Http\Controllers\Api\CaptchaSolveController::class, 'getLevel']);
         Route::get('captcha/level/{user_id}', [\App\Http\Controllers\Api\CaptchaSolveController::class, 'getLevelByUserId']);
         Route::post('captcha/level-by-user', [\App\Http\Controllers\Api\CaptchaSolveController::class, 'getLevelByUserIdFromBody']);
+        Route::get('captcha/todays-earning', [\App\Http\Controllers\Api\CaptchaSolveController::class, 'getTodaysEarning']);
 
         // New route for getting wallet
         Route::get('wallet', [\App\Http\Controllers\Api\WalletController::class, 'show']);
@@ -362,7 +364,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('profile')->group(function () {
             Route::get('/', [\App\Http\Controllers\Api\Agent\ProfileController::class, 'getProfile']);
             Route::post('/complete', [\App\Http\Controllers\Api\Agent\ProfileController::class, 'completeProfile']);
-            Route::patch('/', [\App\Http\Controllers\Api\Agent\ProfileController::class, 'updateProfile']);
+            Route::post('/', [\App\Http\Controllers\Api\Agent\ProfileController::class, 'updateProfile']);
             Route::post('/upload-image', [\App\Http\Controllers\Api\Agent\ProfileController::class, 'uploadProfileImage']);
         });
         

@@ -24,16 +24,18 @@ class WithdrawalRequestController extends Controller
         $request->validate([
             'amount' => 'required|numeric|min:1',
             'upi_id' => 'required|string',
-            'service_type' => 'required|string',
         ]);
 
-        // Optionally, get min withdrawal from user's plan
-        $minWithdrawal = 1; // Set as needed
+        // Get min withdrawal from user's subscription plan
+        $minWithdrawal = 1;
+        if ($user->subscriptionPlan && $user->subscriptionPlan->min_withdrawal_limit) {
+            $minWithdrawal = $user->subscriptionPlan->min_withdrawal_limit;
+        }
         if ($user->wallet_balance < $request->amount) {
             return response()->json(['status' => 'error', 'message' => 'Insufficient wallet balance.'], 400);
         }
         if ($request->amount < $minWithdrawal) {
-            return response()->json(['status' => 'error', 'message' => 'Amount below minimum withdrawal limit.'], 400);
+            return response()->json(['status' => 'error', 'message' => 'Amount below minimum withdrawal limit (minimum: ' . $minWithdrawal . ').'], 400);
         }
 
         $fee = 0; // Set fee logic if needed
@@ -45,7 +47,6 @@ class WithdrawalRequestController extends Controller
             'fee' => $fee,
             'final_withdrawal_amount' => $finalAmount,
             'upi_id' => $request->upi_id,
-            'service_type' => $request->service_type,
             'status' => 'pending',
             'request_date' => now(),
         ]);
@@ -59,7 +60,6 @@ class WithdrawalRequestController extends Controller
             'fee' => $withdrawal->fee,
             'final_withdrawal_amount' => $withdrawal->final_withdrawal_amount,
             'upi_id' => $withdrawal->upi_id,
-            'service_type' => $withdrawal->service_type,
             'status' => $withdrawal->status,
             'request_date' => $withdrawal->request_date,
             'wallet_balance' => $user->wallet_balance,
@@ -118,6 +118,16 @@ class WithdrawalRequestController extends Controller
         $withdrawal->remarks = $request->remarks;
         $withdrawal->save();
         return response()->json(['status' => 'success', 'message' => 'Withdrawal declined.']);
+    }
+
+    // User: Withdrawal history
+    public function history()
+    {
+        $user = Auth::user();
+        $withdrawals = \App\Models\WithdrawalRequest::where('user_id', $user->id)
+            ->orderByDesc('request_date')
+            ->get();
+        return response()->json($withdrawals);
     }
 
     private function authorizeAdmin()

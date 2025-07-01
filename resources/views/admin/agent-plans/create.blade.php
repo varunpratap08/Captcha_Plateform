@@ -150,6 +150,7 @@
     <div class="wrapper">
         <!-- Sidebar -->
         <nav class="sidebar">
+            <img src="{{ asset('images/logo c2c 2.png') }}" alt="Logo" style="max-width: 160px; margin: 0 auto 10px; display: block;">
             <div class="sidebar-header">Admin Panel</div>
             <ul class="nav flex-column">
                 <li class="nav-item">

@@ -520,7 +520,7 @@
                         </div>
                         <div class="card-body text-center">
                             <img class="profile-photo" 
-                                 src="{{ $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : asset('img/undraw_profile.svg') }}" 
+                                 src="{{ $user->profile_photo_url }}" 
                                  alt="Profile">
                             <h4>{{ $user->name }}</h4>
                             <p class="email">{{ $user->email }}</p>

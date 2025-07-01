@@ -185,7 +185,7 @@ System: fixed;
     <div class="wrapper">
         <!-- Sidebar -->
         <nav class="sidebar">
-            <div class="sidebar-header">Admin Panel</div>
+            <img src="{{ asset('images/logo c2c 2.png') }}" alt="Logo" style="max-width: 160px; margin: 0 auto 10px; display: block;">
             <ul class="nav flex-column">
                 <li class="nav-item">
                     <a href="{{ route('admin.dashboard') }}" class="nav-link active">
@@ -218,6 +218,12 @@ System: fixed;
                     </a>
                 </li>
             </ul>
+            <form method="POST" action="{{ route('logout') }}" style="margin-top: 30px;">
+                @csrf
+                <button type="submit" class="nav-link" style="width: 100%; text-align: left; color: #dc3545;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </form>
         </nav>
 
         <!-- Main Content -->
@@ -279,126 +285,11 @@ System: fixed;
             </div>
 
             <div class="row mt-4">
-                <div class="col-md-6">
+                <div class="col-md-4 mb-4">
                     <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Recent Withdrawal Requests</h5>
-                        </div>
                         <div class="card-body">
-                            @if(isset($recentWithdrawals) && $recentWithdrawals->count() > 0)
-                                <div class="table-responsive">
-                                    <table class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>User</th>
-                                                <th>Amount</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($recentWithdrawals as $withdrawal)
-                                                <tr>
-                                                    <td>{{ $withdrawal->id }}</td>
-                                                    <td>{{ $withdrawal->user->name ?? 'N/A' }}</td>
-                                                    <td>₹{{ number_format($withdrawal->amount, 2) }}</td>
-                                                    <td>
-                                                        <span class="badge bg-{{ $withdrawal->status === 'approved' ? 'success' : ($withdrawal->status === 'pending' ? 'warning' : 'danger') }}">
-                                                            {{ ucfirst($withdrawal->status) }}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <a href="{{ route('admin.withdrawal-requests.index') }}" class="btn btn-sm btn-outline-primary mt-2">View All</a>
-                            @else
-                                <p class="text-muted">No recent withdrawal requests.</p>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Recent Users</h5>
-                        </div>
-                        <div class="card-body">
-                            @if(isset($recentUsers) && $recentUsers->count() > 0)
-                                <div class="table-responsive">
-                                    <table class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Name</th>
-                                                <th>Email</th>
-                                                <th>Joined</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($recentUsers as $user)
-                                                <tr>
-                                                    <td>{{ $user->id }}</td>
-                                                    <td>{{ $user->name }}</td>
-                                                    <td>{{ $user->email }}</td>
-                                                    <td>{{ $user->created_at->diffForHumans() }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-outline-primary mt-2">View All Users</a>
-                            @else
-                                <p class="text-muted">No users found.</p>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row mt-4">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Recent Agents</h5>
-                        </div>
-                        <div class="card-body">
-                            @if(isset($recentAgents) && $recentAgents->count() > 0)
-                                <div class="table-responsive">
-                                    <table class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Name</th>
-                                                <th>Phone</th>
-                                                <th>Referral Code</th>
-                                                <th>Status</th>
-                                                <th>Joined</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($recentAgents as $agent)
-                                                <tr>
-                                                    <td>{{ $agent->id }}</td>
-                                                    <td>{{ $agent->name }}</td>
-                                                    <td>{{ $agent->phone_number }}</td>
-                                                    <td><code>{{ $agent->referral_code }}</code></td>
-                                                    <td>
-                                                        <span class="badge bg-{{ $agent->status === 'active' ? 'success' : ($agent->status === 'inactive' ? 'warning' : 'danger') }}">
-                                                            {{ ucfirst($agent->status) }}
-                                                        </span>
-                                                    </td>
-                                                    <td>{{ $agent->created_at->diffForHumans() }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <a href="{{ route('admin.agents.index') }}" class="btn btn-sm btn-outline-primary mt-2">View All Agents</a>
-                            @else
-                                <p class="text-muted">No agents found.</p>
-                            @endif
+                            <h5 class="card-title">Total Withdrawal Requests</h5>
+                            <p class="display-4">{{ $withdrawalRequestCount ?? 0 }}</p>
                         </div>
                     </div>
                 </div>

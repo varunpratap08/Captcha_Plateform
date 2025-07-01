@@ -157,13 +157,17 @@ class ProfileController extends Controller
                 'name' => $agent->name
             ]);
 
+            // Generate a new access token for the agent
+            $token = auth('agent')->login($agent);
             // Clear any output buffer
             ob_end_clean();
-
             return response()->json([
                 'status' => 'success',
                 'message' => 'Profile completed successfully',
                 'data' => [
+                    'access_token' => $token,
+                    'token_type' => 'bearer',
+                    'expires_in' => auth('agent')->factory()->getTTL() * 60,
                     'agent' => [
                         'id' => $agent->id,
                         'name' => $agent->name,

@@ -8,6 +8,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withProviders([
         \App\Providers\AppServiceProvider::class,
         \App\Providers\ApiRouteServiceProvider::class,
+        \App\Providers\RouteServiceProvider::class,
     ])
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
