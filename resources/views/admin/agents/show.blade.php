@@ -385,6 +385,20 @@
                                 {{ $agent->profile_completed ? 'Yes' : 'No' }}
                             </span>
                         </p>
+                        <p>
+                            <strong>Active Plan:</strong>
+                            @if($agent->currentPlan())
+                                {{ $agent->currentPlan()->name }}
+                                @if($agent->activePlanSubscription && $agent->activePlanSubscription->started_at)
+                                    <br><span class="text-xs text-gray-500">Started: {{ $agent->activePlanSubscription->started_at->format('M d, Y') }}</span>
+                                @endif
+                                @if($agent->activePlanSubscription && $agent->activePlanSubscription->amount_paid)
+                                    <br><span class="text-xs text-gray-500">Amount: ₹{{ number_format($agent->activePlanSubscription->amount_paid, 2) }}</span>
+                                @endif
+                            @else
+                                <span class="text-muted">No active plan</span>
+                            @endif
+                        </p>
                     </div>
                 </div>
 

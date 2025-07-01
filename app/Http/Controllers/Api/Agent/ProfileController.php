@@ -87,6 +87,15 @@ class ProfileController extends Controller
 
             $agent = auth('agent')->user();
 
+            if ($agent->profile_completed) {
+                // Clear any output buffer
+                ob_end_clean();
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Profile is already completed. You can only update your profile.'
+                ], 403);
+            }
+
             $updateData = [
                 'name' => $request->name,
                 'date_of_birth' => $request->date_of_birth,

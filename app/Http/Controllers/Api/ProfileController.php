@@ -33,6 +33,13 @@ class ProfileController extends Controller
                     ], 401);
                 }
                 
+                if ($user->profile_completed) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Profile is already completed. You can only update your profile.'
+                    ], 403);
+                }
+                
                 $data = $request->validated();
                 
                 // Handle profile photo upload if present (file or URL)
@@ -138,6 +145,10 @@ class ProfileController extends Controller
                 
                 // Mark profile as completed
                 $data['profile_completed'] = true;
+                // If agent_referral_code is present, save it to the user
+                if (isset($data['agent_referral_code'])) {
+                    $data['agent_referral_code'] = $data['agent_referral_code'];
+                }
                 
                 // Update user profile
                 if (!$user->update($data)) {
@@ -169,6 +180,7 @@ class ProfileController extends Controller
                             'is_verified' => (bool)$user->is_verified,
                             'requires_profile_completion' => !$user->isProfileComplete(),
                             'upi_id' => $user->upi_id,
+                            'agent_referral_code' => $user->agent_referral_code,
                         ],
                         'profile_photo_url' => $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : null,
                         'profile_completed' => (bool) $user->name,

@@ -479,6 +479,22 @@
                                 <div class="info-label">Wallet Amount:</div>
                                 <div class="info-value">₹{{ number_format($user->wallet_balance ?? 0, 2) }}</div>
                             </div>
+                            <div class="info-row">
+                                <div class="info-label">Purchased Plan:</div>
+                                <div class="info-value">
+                                    @if($user->subscription_name)
+                                        {{ $user->subscription_name }}
+                                        @if($user->purchased_date)
+                                            <br><span class="text-xs text-gray-500">Purchased on: {{ $user->purchased_date->format('M d, Y') }}</span>
+                                        @endif
+                                        @if($user->total_amount_paid)
+                                            <br><span class="text-xs text-gray-500">Amount: ₹{{ number_format($user->total_amount_paid, 2) }}</span>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">No plan purchased</span>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                         <div class="card-footer">
                             <a href="{{ route('admin.users.edit', $user->id) }}" class="btn-primary">
