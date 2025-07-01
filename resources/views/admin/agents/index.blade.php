@@ -6,20 +6,19 @@
     <link href="https://cdn.tailwindcss.com" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #3b82f6;
-            --success-color: #22c55e;
-            --warning-color: #f59e0b;
-            --error-color: #ef4444;
-            --info-color: #14b8a6;
+            --primary-color: #4e73df;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
             --background-color: #f8f9fc;
-            --text-color: #1e293b;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --text-color: #333;
             --sidebar-bg: rgba(255, 255, 255, 0.95);
-            --card-bg: rgba(255, 255, 255, 0.95);
             --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             --border-radius: 12px;
-            --accent-color: #60a5fa;
         }
 
         body {
@@ -79,7 +78,8 @@
         .main-content {
             flex: 1;
             padding: 30px;
-            margin-left: 270px;
+            margin-left: 260px;
+            margin-right: 30px;
             transition: margin-left 0.3s ease-in-out;
             min-height: 100vh;
             display: flex;
@@ -188,7 +188,7 @@
 
         .create-agent-btn {
             background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-            color: white;
+            color: blue;
             border-radius: var(--border-radius);
             padding: 12px 24px;
             font-weight: 500;
@@ -289,14 +289,16 @@
         }
 
         .action-buttons .btn-delete {
-            background: var(--error-color);
-            color: white;
+            background: #dc3545 !important;
+            color: #fff !important;
             border: none;
             cursor: pointer;
         }
 
         .action-buttons .btn-delete:hover {
-            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+            box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
+            background: #b52a37 !important;
+            color: #fff !important;
         }
 
         /* Pagination */
@@ -392,32 +394,32 @@
             <ul class="nav flex-column">
                 <li class="nav-item">
                     <a href="{{ route('admin.dashboard') }}" class="nav-link {{ Route::is('admin.dashboard') ? 'active' : '' }}">
-                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                        Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('admin.agents.index') }}" class="nav-link {{ Route::is('admin.agents.*') ? 'active' : '' }}">
-                        <i class="fas fa-users"></i> Agents
+                        Agents
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('admin.users.index') }}" class="nav-link {{ Route::is('admin.users.*') ? 'active' : '' }}">
-                        <i class="fas fa-user"></i> Users
+ Users
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('admin.subscription_plans.index') }}" class="nav-link {{ Route::is('admin..*') ? 'active' : '' }}">
-                        <i class="fas fa-file-alt"></i> Subscription Plans
+                        Subscription Plans
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('admin.agent-plans.index') }}" class="nav-link {{ Route::is('admin.agent-plans.*') ? 'active' : '' }}">
-                        <i class="fas fa-briefcase"></i> Agent Plans
+ Agent Plans
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('admin.withdrawal-requests.index') }}" class="nav-link {{ Route::is('admin.withdrawal-requests.*') ? 'active' : '' }}">
-                        <i class="fas fa-money-check-alt"></i> Withdrawal Requests
+ Withdrawal Requests
                     </a>
                 </li>
             </ul>

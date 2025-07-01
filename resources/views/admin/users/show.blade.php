@@ -7,22 +7,19 @@
     <link href="https://cdn.tailwindcss.com" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #3b82f6;
-            --success-color: #22c55e;
-            --warning-color: #f59e0b;
-            --error-color: #ef4444;
-            --info-color: #14b8a6;
+            --primary-color: #4e73df;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
             --background-color: #f8f9fc;
-            --text-color: #1e293b;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --text-color: #333;
             --sidebar-bg: rgba(255, 255, 255, 0.95);
-            --card-bg: rgba(255, 255, 255, 0.95);
             --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             --border-radius: 12px;
-            --accent-color: #60a5fa;
-            --header-bg-start: #e0e7ff;
-            --header-bg-end: #f1f5f9;
         }
 
         body {
@@ -68,6 +65,10 @@
             color: white;
         }
 
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+
         .sidebar .sidebar-header {
             font-size: 1.5rem;
             font-weight: 600;
@@ -79,7 +80,7 @@
         .main-content {
             flex: 1;
             padding: 30px;
-            margin-left: 270px;
+            margin-left: 260px;
             transition: margin-left 0.3s ease-in-out;
             min-height: 100vh;
             display: flex;

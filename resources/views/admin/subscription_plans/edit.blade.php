@@ -81,7 +81,7 @@
         .main-content {
             flex: 1;
             padding: 30px;
-            margin-left: 270px;
+            margin-left: 260px;
             transition: margin-left 0.3s ease-in-out;
             min-height: 100vh;
             display: flex;
