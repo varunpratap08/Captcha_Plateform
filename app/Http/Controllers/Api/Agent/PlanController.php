@@ -118,35 +118,16 @@ class PlanController extends Controller
                 ], 400);
             }
 
-            // Check if agent has sufficient wallet balance
-            if ($agent->wallet_balance < $plan->price) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Insufficient wallet balance. Required: ₹' . $plan->price . ', Available: ₹' . $agent->wallet_balance
-                ], 400);
-            }
-
             DB::beginTransaction();
 
             try {
-                // Deduct amount from wallet
-                $agent->wallet_balance -= $plan->price;
-                $agent->save();
-                // Log the transaction
-                \App\Models\AgentWalletTransaction::create([
-                    'agent_id' => $agent->id,
-                    'amount' => $plan->price,
-                    'type' => 'debit',
-                    'description' => 'Plan purchase: ' . $plan->name,
-                ]);
-
-                // Create subscription
+                // Create subscription for testing (no payment)
                 $subscription = AgentPlanSubscription::create([
                     'agent_id' => $agent->id,
                     'plan_id' => $plan->id,
                     'amount_paid' => $plan->price,
-                    'payment_method' => 'wallet',
-                    'transaction_id' => 'WALLET_' . time() . '_' . $agent->id,
+                    'payment_method' => 'test',
+                    'transaction_id' => 'TEST_' . uniqid($agent->id . '_'),
                     'status' => 'active',
                     'started_at' => now(),
                     'expires_at' => $plan->duration === 'lifetime' ? null : now()->addMonths($plan->duration === 'monthly' ? 1 : 12),
@@ -158,7 +139,7 @@ class PlanController extends Controller
 
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'Plan purchased successfully',
+                    'message' => 'Plan purchased successfully (test mode)',
                     'data' => [
                         'subscription' => [
                             'id' => $subscription->id,
@@ -192,11 +173,6 @@ class PlanController extends Controller
                                 'max_withdrawal' => $plan->max_withdrawal,
                                 'withdrawal_time' => $plan->withdrawal_time
                             ]
-                        ],
-                        'wallet_info' => [
-                            'previous_balance' => $agent->wallet_balance + $plan->price,
-                            'current_balance' => $agent->wallet_balance,
-                            'amount_deducted' => $plan->price
                         ]
                     ]
                 ]);
@@ -218,16 +194,37 @@ class PlanController extends Controller
     /**
      * Get agent's current plan
      */
-    public function myPlan()
+    public function myPlan(Request $request)
     {
         try {
-            $agent = auth('agent')->user();
-            $subscription = $agent->activePlanSubscription;
+            // Accept agent_id from body (POST/JSON), then query param, then default to authenticated agent
+            $agentId = $request->input('agent_id') ?? $request->query('agent_id');
+            if ($agentId) {
+                $agent = \App\Models\Agent::find($agentId);
+                if (!$agent) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Agent not found',
+                    ], 404);
+                }
+            } else {
+                $agent = auth('agent')->user();
+            }
+
+            // Try to get the latest active subscription first
+            $subscription = $agent->activePlanSubscription()->latest('started_at')->first();
+            $debug = [];
+            if (!$subscription) {
+                $subscription = $agent->planSubscriptions()->orderByDesc('started_at')->first();
+                $debug['all_subscriptions_count'] = $agent->planSubscriptions()->count();
+                $debug['latest_subscription'] = $subscription;
+            }
 
             if (!$subscription) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'No active plan found'
+                    'message' => 'No plan found for this agent',
+                    'debug' => $debug,
                 ], 404);
             }
 
@@ -246,7 +243,7 @@ class PlanController extends Controller
                         'current_earning_rate' => $subscription->getCurrentEarningRate(),
                         'status' => $subscription->status
                     ],
-                    'plan' => [
+                    'plan' => $plan ? [
                         'id' => $plan->id,
                         'name' => $plan->name,
                         'description' => $plan->description,
@@ -267,8 +264,9 @@ class PlanController extends Controller
                             'max_withdrawal' => $plan->max_withdrawal,
                             'withdrawal_time' => $plan->withdrawal_time
                         ]
-                    ]
-                ]
+                    ] : null
+                ],
+                'debug' => $debug,
             ]);
 
         } catch (\Exception $e) {
@@ -287,7 +285,7 @@ class PlanController extends Controller
     {
         try {
             $agent = auth('agent')->user();
-            $subscription = $agent->activePlanSubscription;
+            $subscription = $agent->activePlanSubscription()->latest('started_at')->first();
             $plan = $subscription ? $subscription->plan : null;
 
             $response = [
@@ -352,5 +350,102 @@ class PlanController extends Controller
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
+    }
+
+    /**
+     * Get all plans purchased by the agent
+     */
+    public function planHistory()
+    {
+        try {
+            $agent = auth('agent')->user();
+            $subscriptions = $agent->planSubscriptions()->with('plan')->orderByDesc('started_at')->get();
+
+            $data = $subscriptions->map(function ($subscription) {
+                return [
+                    'subscription_id' => $subscription->id,
+                    'plan_id' => $subscription->plan_id,
+                    'plan_name' => $subscription->plan ? $subscription->plan->name : null,
+                    'plan_description' => $subscription->plan ? $subscription->plan->description : null,
+                    'plan_icon' => $subscription->plan ? $subscription->plan->icon : null,
+                    'amount_paid' => $subscription->amount_paid,
+                    'payment_method' => $subscription->payment_method,
+                    'transaction_id' => $subscription->transaction_id,
+                    'started_at' => $subscription->started_at,
+                    'expires_at' => $subscription->expires_at,
+                    'total_logins' => $subscription->total_logins,
+                    'total_earnings' => $subscription->total_earnings,
+                    'current_earning_rate' => $subscription->getCurrentEarningRate(),
+                    'status' => $subscription->status
+                ];
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Plan history retrieved successfully',
+                'data' => [
+                    'plans' => $data
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to retrieve plan history',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Debug: Get all plan subscriptions for the authenticated agent
+     */
+    public function debugAllPlans()
+    {
+        $agent = auth('agent')->user();
+        $subs = $agent->planSubscriptions()->with('plan')->get();
+        return response()->json([
+            'agent_id' => $agent->id,
+            'subscriptions' => $subs
+        ]);
+    }
+
+    /**
+     * Get plan details by agent ID
+     * POST /api/v1/agent/plans/by-agent-id
+     * Body: { agent_id: int }
+     */
+    public function getPlanByAgentId(Request $request)
+    {
+        $agentId = $request->input('agent_id');
+        if (!$agentId) {
+            return response()->json(['status' => 'error', 'message' => 'Agent ID is required.'], 400);
+        }
+        $agent = \App\Models\Agent::find($agentId);
+        if (!$agent) {
+            return response()->json(['status' => 'error', 'message' => 'Agent not found.'], 404);
+        }
+        $subscription = $agent->planSubscriptions()->latest('started_at')->first();
+        if (!$subscription) {
+            return response()->json(['status' => 'error', 'message' => 'Agent has not purchased any plan.'], 404);
+        }
+        $plan = $subscription->plan;
+        if (!$plan) {
+            return response()->json(['status' => 'error', 'message' => 'Plan not found.'], 404);
+        }
+        return response()->json([
+            'status' => 'success',
+            'agent_id' => $agent->id,
+            'plan' => [
+                'id' => $plan->id,
+                'name' => $plan->name,
+                'price' => $plan->price,
+                'duration' => $plan->duration,
+                'icon' => $plan->icon,
+                'description' => $plan->description,
+                'started_at' => $subscription->started_at,
+                'expires_at' => $subscription->expires_at,
+                'status' => $subscription->status,
+            ],
+        ]);
     }
 }

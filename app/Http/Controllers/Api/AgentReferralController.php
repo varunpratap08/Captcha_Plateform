@@ -69,4 +69,55 @@ class AgentReferralController extends Controller
         // Show first 4 and last 2 digits, mask the rest
         return substr($phone, 0, 4) . str_repeat('*', max(0, strlen($phone) - 6)) . substr($phone, -2);
     }
+
+    /**
+     * Get total referral earnings for an agent
+     */
+    public function referralEarnings(Request $request)
+    {
+        // Check for agent authentication
+        $authAgent = \Auth::guard('agent')->user();
+        if (!$authAgent) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Agent not authenticated.'
+            ], 401);
+        }
+
+        // Accept agent_id from body (POST/JSON)
+        $agentId = $request->input('agent_id');
+        if (!$agentId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'agent_id is required.'
+            ], 422);
+        }
+        $agent = \App\Models\Agent::find($agentId);
+        if (!$agent) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Agent not found',
+            ], 404);
+        }
+
+        // Sum all wallet transactions for this agent where description contains 'referral'
+        $totalReferralEarnings = $agent->walletTransactions()
+            ->where('type', 'credit')
+            ->where('description', 'like', '%referral%')
+            ->sum('amount');
+
+        $transactions = $agent->walletTransactions()
+            ->where('type', 'credit')
+            ->where('description', 'like', '%referral%')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'total_referral_earnings' => $totalReferralEarnings,
+                'transactions' => $transactions
+            ]
+        ]);
+    }
 } 

@@ -380,6 +380,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/purchase', [\App\Http\Controllers\Api\Agent\PlanController::class, 'purchase']);
             Route::get('/my-plan', [\App\Http\Controllers\Api\Agent\PlanController::class, 'myPlan']);
             Route::get('/agent/details', [\App\Http\Controllers\Api\Agent\PlanController::class, 'agentDetails']);
+            Route::get('/history', [\App\Http\Controllers\Api\Agent\PlanController::class, 'planHistory']);
+            Route::get('/debug-all-plans', [\App\Http\Controllers\Api\Agent\PlanController::class, 'debugAllPlans']);
+            Route::post('/by-agent-id', [\App\Http\Controllers\Api\Agent\PlanController::class, 'getPlanByAgentId']);
         });
 
         // Agent withdrawal request routes
@@ -388,6 +391,9 @@ Route::prefix('v1')->group(function () {
 
         // Agent wallet add balance (testing only)
         Route::post('wallet/add-balance', [\App\Http\Controllers\Api\Agent\WalletController::class, 'addBalance']);
+
+        // New route for agent referral earnings
+        Route::post('/earnings/referral', [\App\Http\Controllers\Api\AgentReferralController::class, 'referralEarnings']);
     });
     
     // New route for getting plans

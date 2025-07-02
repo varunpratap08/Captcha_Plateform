@@ -124,7 +124,7 @@ class Agent extends Authenticatable implements JWTSubject
      */
     public function activePlanSubscription()
     {
-        return $this->hasOne(AgentPlanSubscription::class)->where('status', 'active');
+        return $this->hasMany(AgentPlanSubscription::class)->where('status', 'active');
     }
 
     /**
@@ -132,7 +132,8 @@ class Agent extends Authenticatable implements JWTSubject
      */
     public function currentPlan()
     {
-        return $this->activePlanSubscription?->plan;
+        $subscription = $this->activePlanSubscription()->latest('started_at')->first();
+        return $subscription ? $subscription->plan : null;
     }
 
     /**
