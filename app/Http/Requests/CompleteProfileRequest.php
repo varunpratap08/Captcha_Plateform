@@ -30,9 +30,21 @@ class CompleteProfileRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$userId],
             'profile_photo' => [
                 'nullable',
-                'image',
-                'max:2048',
-                'mimes:jpg,jpeg,png,webp',
+                function ($attribute, $value, $fail) {
+                    if ($this->hasFile('profile_photo')) {
+                        if (!$this->file('profile_photo')->isValid()) {
+                            $fail('The profile photo file is not valid.');
+                        }
+                        if (!in_array($this->file('profile_photo')->extension(), ['jpg', 'jpeg', 'png', 'webp'])) {
+                            $fail('The profile photo must be a file of type: jpg, jpeg, png, webp.');
+                        }
+                        if ($this->file('profile_photo')->getSize() > 2 * 1024 * 1024) {
+                            $fail('The profile photo must not be greater than 2MB.');
+                        }
+                    } else if (!empty($value) && !filter_var($value, FILTER_VALIDATE_URL)) {
+                        $fail('The profile photo must be a valid URL or an image file.');
+                    }
+                }
             ],
             'date_of_birth' => ['required', 'date', 'before:today'],
             'upi_id' => ['required', 'max:50'],
@@ -44,24 +56,6 @@ class CompleteProfileRequest extends FormRequest
                     $user = \App\Models\User::find($userId);
                     if ($user && $user->agent_id) {
                         $fail('You have already used an agent referral code.');
-                    }
-                }
-            ],
-            'profile_photo_url' => [
-                'nullable',
-                function ($attribute, $value, $fail) {
-                    if ($this->hasFile('profile_photo_url')) {
-                        if (!$this->file('profile_photo_url')->isValid()) {
-                            $fail('The profile photo file is not valid.');
-                        }
-                        if (!in_array($this->file('profile_photo_url')->extension(), ['jpg', 'jpeg', 'png', 'webp'])) {
-                            $fail('The profile photo must be a file of type: jpg, jpeg, png, webp.');
-                        }
-                        if ($this->file('profile_photo_url')->getSize() > 2 * 1024 * 1024) {
-                            $fail('The profile photo must not be greater than 2MB.');
-                        }
-                    } else if (!empty($value) && !filter_var($value, FILTER_VALIDATE_URL)) {
-                        $fail('The profile photo URL must be a valid URL.');
                     }
                 }
             ],

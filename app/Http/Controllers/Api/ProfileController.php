@@ -68,26 +68,12 @@ class ProfileController extends Controller
                         ]);
                         throw new \RuntimeException('Failed to upload profile photo. Please try again.');
                     }
-                } else if ($request->hasFile('profile_photo_url')) {
+                } else if ($request->filled('profile_photo') && filter_var($request->input('profile_photo'), FILTER_VALIDATE_URL)) {
                     try {
                         if ($user->profile_photo_path) {
                             Storage::disk('public')->delete($user->profile_photo_path);
                         }
-                        $path = $request->file('profile_photo_url')->store('profile-photos', 'public');
-                        $data['profile_photo_path'] = $path;
-                    } catch (\Exception $e) {
-                        \Log::error('Profile photo upload failed (profile_photo_url as file)', [
-                            'user_id' => $user->id,
-                            'error' => $e->getMessage()
-                        ]);
-                        throw new \RuntimeException('Failed to upload profile photo. Please try again.');
-                    }
-                } else if ($request->filled('profile_photo_url') && filter_var($request->input('profile_photo_url'), FILTER_VALIDATE_URL)) {
-                    try {
-                        if ($user->profile_photo_path) {
-                            Storage::disk('public')->delete($user->profile_photo_path);
-                        }
-                        $url = $request->input('profile_photo_url');
+                        $url = $request->input('profile_photo');
                         $imageContents = @file_get_contents($url);
                         if ($imageContents === false) {
                             throw new \RuntimeException('Failed to download image from URL.');
@@ -105,7 +91,7 @@ class ProfileController extends Controller
                         \Log::error('Profile photo download failed', [
                             'user_id' => $user->id,
                             'error' => $e->getMessage(),
-                            'source_url' => $request->input('profile_photo_url')
+                            'source_url' => $request->input('profile_photo')
                         ]);
                         throw new \RuntimeException('Failed to download profile photo from URL. Please try again.');
                     }
@@ -294,26 +280,12 @@ class ProfileController extends Controller
                         ]);
                         throw new \RuntimeException('Failed to upload profile photo. Please try again.');
                     }
-                } else if ($request->hasFile('profile_photo_url')) {
+                } else if ($request->filled('profile_photo') && filter_var($request->input('profile_photo'), FILTER_VALIDATE_URL)) {
                     try {
                         if ($user->profile_photo_path) {
                             Storage::disk('public')->delete($user->profile_photo_path);
                         }
-                        $path = $request->file('profile_photo_url')->store('profile-photos', 'public');
-                        $data['profile_photo_path'] = $path;
-                    } catch (\Exception $e) {
-                        \Log::error('Profile photo upload failed (profile_photo_url as file)', [
-                            'user_id' => $user->id,
-                            'error' => $e->getMessage()
-                        ]);
-                        throw new \RuntimeException('Failed to upload profile photo. Please try again.');
-                    }
-                } else if ($request->filled('profile_photo_url') && filter_var($request->input('profile_photo_url'), FILTER_VALIDATE_URL)) {
-                    try {
-                        if ($user->profile_photo_path) {
-                            Storage::disk('public')->delete($user->profile_photo_path);
-                        }
-                        $url = $request->input('profile_photo_url');
+                        $url = $request->input('profile_photo');
                         $imageContents = @file_get_contents($url);
                         if ($imageContents === false) {
                             throw new \RuntimeException('Failed to download image from URL.');
@@ -331,7 +303,7 @@ class ProfileController extends Controller
                         \Log::error('Profile photo download failed', [
                             'user_id' => $user->id,
                             'error' => $e->getMessage(),
-                            'source_url' => $request->input('profile_photo_url')
+                            'source_url' => $request->input('profile_photo')
                         ]);
                         throw new \RuntimeException('Failed to download profile photo from URL. Please try again.');
                     }
